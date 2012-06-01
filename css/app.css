@@ -8,3 +8,10 @@
     stroke: none;
     fill: #F6F4CD;
 }
+
+text.numchunks {
+    fill: #ddd;
+    font: 500 196px "Helvetica Neue";
+    font-size: 200%;
+    font-weight: 500;
+}

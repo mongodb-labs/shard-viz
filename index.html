@@ -7,12 +7,14 @@
 	<script type="text/javascript" src="/js/viz.js"></script>
     </head>
     <body>
-	<div class="drawboard"></div>
+	<div class="drawboard">
+	    <button id="add">Add</button>
+	    <button id="remove">Remove</button>
+	</div>
     </body>
     <script type="text/javascript">
 	$(document).ready(function () {
 
-	    shards = [1,2,1,2,3,4,5,6,7,8];
 	    var svgw = 960; //svg width
 	    var svgh = 640; //svg height
 	    var pad = 10; //spacing between shards
@@ -25,28 +27,45 @@
 		.append("g");
 
 	    draw = function () {
-
-		/**
-		 * Returns the assigned row for shard of index i. Assignments start at 0.
-		 */
-		function getRow(i) {
-		    return Math.floor((i)/maxspr);
-		}
-
 		var nshards = shards.length; //number of shards
 		var maxspr = (sperrow > nshards) ? nshards : sperrow; //max shards per row (min of nshards and sperrow)
 		var nrows = getRow(shards.length-1)+1; //total number of rows
 		var shardw = (svgw-(maxspr+1)*pad)/maxspr; //width per shard (including padding)
 		var shardh = (svgh-(nrows+1)*pad)/nrows; //height per shard (including padding)
 
-		var rect = svg.selectAll("rect")
+		var shard_group = svg.selectAll("g.shard")
 		    .data(shards);
 
-		// Enter
-		rect.enter().append("g")
-		    .append("rect")
-		    .attr("x", function (d, i) { return ((i % maxspr)*(shardw)) + (pad*((i % maxspr)+1)) })
-		    .attr("y", function (d, i) { return Math.floor((i)/maxspr)*shardh + (pad*(getRow(i)+1)) }) 
+		var shardRects = svg.selectAll("rect.shard");
+		var shardChunks = svg.selectAll("text.numchunks");
+		
+		/* Returns the assigned row for shard of index i. Assignments start at 0.
+		 */
+		function getRow(i) {
+		    return Math.floor((i)/maxspr);
+		}
+
+		/* Returns the x coordinate for the ith shard. Coordinate measured from top left.
+	         */
+		function xPos(i) {
+		    return ((i % maxspr)*(shardw)) + (pad*((i % maxspr)+1)) 
+		}
+
+		/* Returns the y coordinate for the ith shard. Coordinate measured from top left.
+	         */
+		function yPos(i) {
+		    return Math.floor((i)/maxspr)*shardh + (pad*(getRow(i)+1)) 
+		}
+
+		// Shard Group Enter
+		var shardEnter = shard_group.enter().append("g")
+		    .attr("x", function (d, i) { return xPos(i); })
+		    .attr("y", function (d, i) { return yPos(i); })
+
+		// Shard Rect Enter
+		shardEnter.append("rect")
+		    .attr("x", function (d, i) { return xPos(i); })
+		    .attr("y", function (d, i) { return yPos(i); }) 
 		.transition()
 		    .attr("width", shardw)
 		    .attr("height", shardh)
@@ -54,10 +73,19 @@
 		    .attr("ry", 10)
 		    .attr("class", "shard");
 
-		// Update
-		rect.transition()
-		    .attr("x", function (d, i) { return ((i % maxspr)*(shardw)) + (pad*((i % maxspr)+1)) })
-		    .attr("y", function (d, i) { return Math.floor((i)/maxspr)*shardh + (pad*(getRow(i)+1)) }) 
+		// Shard Text Enter
+		shardEnter.append("text")
+		    .attr("x", function (d, i) { return xPos(i)+(shardw/2); })
+		    .attr("y", function (d, i) { return yPos(i); }) 
+		    .attr("dy", function (d, i) { return shardh/3; })
+		    .text("10.2K")
+		    .attr("text-anchor", "middle")
+		    .attr("class", "numchunks");
+
+		// Update Shard data (groups)
+		shard_group
+		    .attr("x", function (d, i) { return xPos(i); })
+		    .attr("y", function (d, i) { return yPos(i); }) 
 		.transition()
 		    .attr("width", shardw)
 		    .attr("height", shardh)
@@ -65,16 +93,61 @@
 		    .attr("ry", 10)
 		    .attr("class", "shard");
 
-		// Exit
-		rect.exit().transition()
+		// Update shard rects
+		shardRects
+		    .attr("x", function (d, i) { return xPos(i); })
+		    .attr("y", function (d, i) { return yPos(i); }) 
+		.transition()
+		    .attr("width", shardw)
+		    .attr("height", shardh)
+		    .attr("rx", 10)
+		    .attr("ry", 10)
+		    .attr("class", "shard");
+
+		// Update shard chunks
+		shardChunks
+		    .attr("x", function (d, i) { return xPos(i)+(shardw/2); })
+		    .attr("y", function (d, i) { return yPos(i); }) 
+		    .attr("dy", function (d, i) { return shardh/3; })
+		    .text("10.2K")
+		    .attr("text-anchor", "middle")
+		    .attr("class", "numchunks");
+
+		var shardExit = shard_group.exit()
+
+		// Shard Text Exit 
+		// Todo: Fix transitions!
+		shardExit.selectAll("text.shard")
+		    .transition()
+		    .style("font-size", "0")
+		    .remove();
+
+		// Shard Rect Exit
+		shardExit.selectAll("rect.shard")
 		    .transition()
 		    .attr("width", 0)
 		    .attr("height", 0)
-		    .remove()
+		    .remove();
+
+		// Shard Group Exit
+		shardExit.transition()
+		    .attr("width", 0)
+		    .attr("height", 0)
+		    .remove();
 	    }
 
+	    var shards = [1,2,1,2,3,4,5,6,7,8];
 	    draw();
 
+	    $("#add").click(function () {
+		    shards.push(1);
+		    draw();
+		});
+
+	    $("#remove").click(function () {
+		    shards.splice(0,1);
+		    draw();
+		});
 	});
     </script>
 </html>
