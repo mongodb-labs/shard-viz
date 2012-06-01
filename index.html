@@ -1,0 +1,80 @@
+<html>
+    <head>
+	<link rel="stylesheet" type="text/css" href="/css/app.css" />
+	<script type="text/javascript" src="/js/jquery.min.js"></script>
+	<script type="text/javascript" src="/js/jquery.base64-1.0.min.js" charset="utf-8"></script>
+	<script type="text/javascript" src="/js/d3.v2.min.js"></script>
+	<script type="text/javascript" src="/js/viz.js"></script>
+    </head>
+    <body>
+	<div class="drawboard"></div>
+    </body>
+    <script type="text/javascript">
+	$(document).ready(function () {
+
+	    shards = [1,2,1,2,3,4,5,6,7,8];
+	    var svgw = 960; //svg width
+	    var svgh = 640; //svg height
+	    var pad = 10; //spacing between shards
+	    var sperrow = 6; //shards per row
+	    var svg = d3.select(".drawboard")
+		.append("svg")
+		.attr("width", svgw)
+		.attr("height", svgh)
+		.attr("id", "chart")
+		.append("g");
+
+	    draw = function () {
+
+		/**
+		 * Returns the assigned row for shard of index i. Assignments start at 0.
+		 */
+		function getRow(i) {
+		    return Math.floor((i)/maxspr);
+		}
+
+		var nshards = shards.length; //number of shards
+		var maxspr = (sperrow > nshards) ? nshards : sperrow; //max shards per row (min of nshards and sperrow)
+		var nrows = getRow(shards.length-1)+1; //total number of rows
+		var shardw = (svgw-(maxspr+1)*pad)/maxspr; //width per shard (including padding)
+		var shardh = (svgh-(nrows+1)*pad)/nrows; //height per shard (including padding)
+
+		var rect = svg.selectAll("rect")
+		    .data(shards);
+
+		// Enter
+		rect.enter().append("g")
+		    .append("rect")
+		    .attr("x", function (d, i) { return ((i % maxspr)*(shardw)) + (pad*((i % maxspr)+1)) })
+		    .attr("y", function (d, i) { return Math.floor((i)/maxspr)*shardh + (pad*(getRow(i)+1)) }) 
+		.transition()
+		    .attr("width", shardw)
+		    .attr("height", shardh)
+		    .attr("rx", 10)
+		    .attr("ry", 10)
+		    .attr("class", "shard");
+
+		// Update
+		rect.transition()
+		    .attr("x", function (d, i) { return ((i % maxspr)*(shardw)) + (pad*((i % maxspr)+1)) })
+		    .attr("y", function (d, i) { return Math.floor((i)/maxspr)*shardh + (pad*(getRow(i)+1)) }) 
+		.transition()
+		    .attr("width", shardw)
+		    .attr("height", shardh)
+		    .attr("rx", 10)
+		    .attr("ry", 10)
+		    .attr("class", "shard");
+
+		// Exit
+		rect.exit().transition()
+		    .transition()
+		    .attr("width", 0)
+		    .attr("height", 0)
+		    .remove()
+	    }
+
+	    draw();
+
+	});
+    </script>
+</html>
