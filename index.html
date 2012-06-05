@@ -15,10 +15,93 @@
     <script type="text/javascript">
 	$(document).ready(function () {
 
+	    /* Given a list of chunks and a shard name, return a list of 
+	     * chunks for the shard name. 
+	     */
+	    function findChunks(chunks, shard) {
+		var r = [];
+		for (var i in chunks) {
+		    if (chunks[i].shard == shard) r.push(chunks[i]);     
+		}
+		return r;
+	    }
+
+	    /* Formats number for display in chart
+	     */
+	    function formatNum(i) { return i; }
+
+	    chunkList = [];
+	    shards = [];
+//	    for (var i = 0 ; i < 150 ; i++) {
+//		chunkList.push({ "_id" : "test.sharded_collection-_id_MinKey", "lastmod" : { "t" : 108000 , "i" : 0 }, "ns" : "test.sharded_collection", "min" : { "_id" : { "$minKey" : 1 } }, "max" : { "_id" : 0 }, "shard" : "shard2" });
+//	    }
+//	    for (var i = 0 ; i < 150 ; i++) {
+//		chunkList.push({ "_id" : "test.sharded_collection-_id_MinKey", "lastmod" : { "t" : 108000 , "i" : 0 }, "ns" : "test.sharded_collection", "min" : { "_id" : { "$minKey" : 1 } }, "max" : { "_id" : 0 }, "shard" : "shard1" });
+//	    }
+//	    for (var i = 0 ; i < 150 ; i++) {
+//		chunkList.push({ "_id" : "test.sharded_collection-_id_MinKey", "lastmod" : { "t" : 108000 , "i" : 0 }, "ns" : "test.sharded_collection", "min" : { "_id" : { "$minKey" : 1 } }, "max" : { "_id" : 0 }, "shard" : "shard3" });
+//	    }
+//	    shards = [
+//		    {"_id" : "shard1", "host" : "localhost:4000"}, 
+//		    {"_id" : "shard2", "host" : "localhost:4001"},
+//		    {"_id" : "shard3", "host" : "localhost:4002"}
+//	    ];
+//	    for (var i in shards) {
+//		shards[i].chunks = findChunks(chunkList, shards[i]._id);
+//		console.log(shards[i].chunks);
+//		for (var k in shards[i].chunks) {
+//		    shards[i].chunks[k].num = {
+//			shard: i,
+//			chunk: k
+//		    };
+//		}
+//	    }
+
+	    var host = ['127.0.0.1', '5002', '', ''];
+	    setInterval(function () {
+		getShards(host, function (data) {
+			shards = data.rows;
+			getChunks(host, function (resp) {
+			    chunkList = resp.rows;
+			    for (var i in shards) {
+				shards[i].chunks = findChunks(resp.rows, shards[i]._id);
+				// assign a number to each chunk. This helps them position themselves
+				// inside the shard's rectangle
+				for (var k in shards[i].chunks) {
+				    shards[i].chunks[k].num = {
+					shard: i,
+					chunk: k
+				    };
+				}
+			    }
+			    draw();
+			});
+		})}, 1500
+	    );
+
+	    $("#add").click(function () {
+		    shards.push({_id: "test", host: "test", chunks: []});
+		    draw();
+	    });
+
+	    $("#remove").click(function () {
+		    shards.splice(0,1);
+		    draw();
+	    });
+ 
+	    // Shard formatting
+	    var shardPad = 10; //spacing between shards
+	    var sperrow = 6; //shards per row
+
+	    // Chunk formatting
+	    var cperrow = 10; //chunks per row
+	    var chunkPad = 5; //spacing between chunks
+	    var chunkrx = 3; //chunk roundedness on x
+	    var chunkry = 3; //chunk roundedness on y
+
+	    //SVG formatting
 	    var svgw = 960; //svg width
 	    var svgh = 640; //svg height
-	    var pad = 10; //spacing between shards
-	    var sperrow = 6; //shards per row
 	    var svg = d3.select(".drawboard")
 		.append("svg")
 		.attr("width", svgw)
@@ -27,65 +110,134 @@
 		.append("g");
 
 	    draw = function () {
+		//Shard formatting
 		var nshards = shards.length; //number of shards
 		var maxspr = (sperrow > nshards) ? nshards : sperrow; //max shards per row (min of nshards and sperrow)
-		var nrows = getRow(shards.length-1)+1; //total number of rows
-		var shardw = (svgw-(maxspr+1)*pad)/maxspr; //width per shard (including padding)
-		var shardh = (svgh-(nrows+1)*pad)/nrows; //height per shard (including padding)
+		var nShardRows = getShardRow(shards.length-1)+1; //total number of shard rows
+		var shardw = (svgw-(maxspr+1)*shardPad)/maxspr; //width per shard (including padding)
+		var shardh = (svgh-(nShardRows+1)*shardPad)/nShardRows; //height per shard (including padding)
 
-		var shard_group = svg.selectAll("g.shard")
-		    .data(shards);
-
-		var shardRects = svg.selectAll("rect.shard");
-		var shardChunks = svg.selectAll("text.numchunks");
-		
 		/* Returns the assigned row for shard of index i. Assignments start at 0.
 		 */
-		function getRow(i) {
+		function getShardRow(i) {
 		    return Math.floor((i)/maxspr);
 		}
 
-		/* Returns the x coordinate for the ith shard. Coordinate measured from top left.
+		/* Returns the x coordinate for the ith shard. Coordinate measured from left.
 	         */
-		function xPos(i) {
-		    return ((i % maxspr)*(shardw)) + (pad*((i % maxspr)+1)) 
+		function shardXPos(i) {
+		    return ((i % maxspr)*(shardw)) + (shardPad*((i % maxspr)+1)) 
 		}
 
-		/* Returns the y coordinate for the ith shard. Coordinate measured from top left.
+		/* Returns the y coordinate for the ith shard. Coordinate measured from top.
 	         */
-		function yPos(i) {
-		    return Math.floor((i)/maxspr)*shardh + (pad*(getRow(i)+1)) 
+		function shardYPos(i) {
+		    return getShardRow(i)*shardh + (shardPad*(getShardRow(i)+1)) 
 		}
+
+		function chunkWidth(d) {
+		    function getChunkRow(i) {
+			return Math.floor((i)/maxcpr);
+		    }
+		    var nchunks = shards[d.num.shard].chunks.length; // the number of chunks on this shard			    
+		    var maxcpr = (cperrow > nchunks) ? nchunks : cperrow; //max chunks per row (min of nchunks and cperrow)
+		    var nChunkRows = getChunkRow(shards[d.num.shard].chunks.length-1)+1; //num chunks per row
+		    var chunkw = (shardw-(maxcpr+1)*chunkPad)/maxcpr; //width per chunk (including padding) 
+		    return chunkw;
+		}
+
+		function chunkHeight(d) {
+		    function getChunkRow(i) {
+			return Math.floor((i)/maxcpr);
+		    }
+		    var nchunks = shards[d.num.shard].chunks.length; // the number of chunks on this shard			    
+		    var maxcpr = (cperrow > nchunks) ? nchunks : cperrow; //max chunks per row (min of nchunks and cperrow)
+		    var nChunkRows = getChunkRow(shards[d.num.shard].chunks.length-1)+1; //num chunks per row
+		    var chunkh = (shardh-(nChunkRows+1)*chunkPad)/nChunkRows; //height per chunk (including padding)
+		    return chunkh;
+		}
+
+		function chunkXPos(d, selection) {
+		    var num = d.num.chunk; // the position in this shard's chunk list
+		    console.log(num);
+		    var shardx = shardXPos(d.num.shard);
+		    console.log(shardx);
+		    var x = shardx + ((num % cperrow)*($(selection).attr("width"))) + (chunkPad*((num % cperrow)+1));
+		    console.log(num);
+		    console.log(x);
+		    return x;
+		}
+
+		function chunkYPos(d, selection) {
+		    var num = d.num.chunk; // the position in this shard's chunk list
+		    var shardy = shardYPos(d.num.shard);
+		    return shardy + Math.floor((num)/cperrow)*($(selection).attr("height")) + (chunkPad*(Math.floor((num)/cperrow)+1));
+		}
+
+		//Object selections
+		var shard_group = svg.selectAll("g.shard")
+		    .data(shards);
+		var shardRects = svg.selectAll("rect.shard")
+		    .data(shards);
+		var numChunks = svg.selectAll("text.numchunks")
+		    .data(shards);
+		var chunks = svg.selectAll("rect.chunk")
+		    .data(chunkList);
 
 		// Shard Group Enter
 		var shardEnter = shard_group.enter().append("g")
-		    .attr("x", function (d, i) { return xPos(i); })
-		    .attr("y", function (d, i) { return yPos(i); })
+		    .attr("x", function (d, i) { return shardXPos(i); })
+		    .attr("y", function (d, i) { return shardYPos(i); })
 
 		// Shard Rect Enter
 		shardEnter.append("rect")
-		    .attr("x", function (d, i) { return xPos(i); })
-		    .attr("y", function (d, i) { return yPos(i); }) 
+		    .attr("id", function (d) { return d._id; })
 		.transition()
+		    .attr("x", function (d, i) { return shardXPos(i); })
+		    .attr("y", function (d, i) { return shardYPos(i); }) 
 		    .attr("width", shardw)
 		    .attr("height", shardh)
 		    .attr("rx", 10)
 		    .attr("ry", 10)
 		    .attr("class", "shard");
 
+		// Chunk enter
+		var chunkEnter = chunks.enter().append("rect");
+		chunkEnter.transition()
+		    .duration(1000)
+		    .attr("width", function (d, i) { return chunkWidth(d); })
+		    .attr("height", function (d, i) { return chunkHeight(d); })
+		    .attr("x", function (d, i) { return chunkXPos(d, this); })
+		    .attr("y", function (d, i) { return chunkYPos(d, this); })
+		    .attr("rx", chunkrx)
+		    .attr("ry", chunkry)
+		    .style("fill", "orangered")
+		    .attr("class", "chunk");
+
 		// Shard Text Enter
 		shardEnter.append("text")
-		    .attr("x", function (d, i) { return xPos(i)+(shardw/2); })
-		    .attr("y", function (d, i) { return yPos(i); }) 
+		    .attr("x", function (d, i) { return shardXPos(i)+(shardw/2); })
+		    .attr("y", function (d, i) { return shardYPos(i); }) 
 		    .attr("dy", function (d, i) { return shardh/3; })
-		    .text("10.2K")
+		    .text(function (d) { return formatNum(d.chunks.length); })
 		    .attr("text-anchor", "middle")
 		    .attr("class", "numchunks");
 
+		// Update Chunks
+		chunks.transition()
+		    .attr("width", function (d, i) { return chunkWidth(d); })
+		    .attr("height", function (d, i) { return chunkHeight(d); })
+		    .attr("x", function (d, i) { return chunkXPos(d, this); })
+		    .attr("y", function (d, i) { return chunkYPos(d, this); })
+		    .attr("rx", chunkrx)
+		    .attr("ry", chunkry)
+		    .style("fill", "orangered")
+		    .attr("class", "chunk");
+
 		// Update Shard data (groups)
 		shard_group
-		    .attr("x", function (d, i) { return xPos(i); })
-		    .attr("y", function (d, i) { return yPos(i); }) 
+		    .attr("x", function (d, i) { return shardXPos(i); })
+		    .attr("y", function (d, i) { return shardYPos(i); }) 
 		.transition()
 		    .attr("width", shardw)
 		    .attr("height", shardh)
@@ -95,25 +247,43 @@
 
 		// Update shard rects
 		shardRects
-		    .attr("x", function (d, i) { return xPos(i); })
-		    .attr("y", function (d, i) { return yPos(i); }) 
 		.transition()
+		    .attr("x", function (d, i) { return shardXPos(i); })
+		    .attr("y", function (d, i) { return shardYPos(i); }) 
 		    .attr("width", shardw)
 		    .attr("height", shardh)
 		    .attr("rx", 10)
 		    .attr("ry", 10)
 		    .attr("class", "shard");
 
-		// Update shard chunks
-		shardChunks
-		    .attr("x", function (d, i) { return xPos(i)+(shardw/2); })
-		    .attr("y", function (d, i) { return yPos(i); }) 
+		// Update shard Text
+		numChunks
+		    .attr("x", function (d, i) { return shardXPos(i)+(shardw/2); })
+		    .attr("y", function (d, i) { return shardYPos(i); }) 
 		    .attr("dy", function (d, i) { return shardh/3; })
-		    .text("10.2K")
+		    .text(function (d) { return formatNum(d.chunks.length); })
 		    .attr("text-anchor", "middle")
 		    .attr("class", "numchunks");
 
-		var shardExit = shard_group.exit()
+		// Animate 
+		//d3.timer(function () {
+		//    for (i in d3.range(1000)) {
+		//	circle
+		//	    .transition()
+		//	    .attr("cx", i)
+		//	    .attr("cy", i);
+		//    }
+		//    return true;
+		//});
+
+		// Chunk Exit
+		var chunkExit = chunks.exit();
+		chunkExit.transition()
+		    .attr("width", 0)
+		    .attr("height", 0)
+		    .remove();
+
+		var shardExit = shard_group.exit();
 
 		// Shard Text Exit 
 		// Todo: Fix transitions!
@@ -135,19 +305,7 @@
 		    .attr("height", 0)
 		    .remove();
 	    }
-
-	    var shards = [1,2,1,2,3,4,5,6,7,8];
 	    draw();
-
-	    $("#add").click(function () {
-		    shards.push(1);
-		    draw();
-		});
-
-	    $("#remove").click(function () {
-		    shards.splice(0,1);
-		    draw();
-		});
 	});
     </script>
 </html>
