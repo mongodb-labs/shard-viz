@@ -4,31 +4,31 @@ $(document).ready(function() {
       cellColor = d3.scale.category20(),
       pieColor = d3.scale.category20c(),
       host = ['127.0.0.1', '5004', '', ''];
-      
+
   var svg = d3.selectAll("#drawboard").append("svg")
       .attr("width", width)
       .attr("height", height);
-  
+
   var treemap = d3.layout.treemap()
       .size([width, height])
       .sticky(true) // may need to change this
       .value(function(d) { return d.size; });
-      
+
   var arc = d3.svg.arc()
       .innerRadius(function (d) { return (Math.min(d.data.parent.dy, d.data.parent.dx)/2) - 20; })
       .outerRadius(function (d) { var innerRadius = ((Math.min(d.data.parent.dy, d.data.parent.dx)/2) - 20); return innerRadius - (innerRadius/2.5); });
-  
+
   var pie = d3.layout.pie()
       .value(function(d) { return d.chunks.length; });
-   
+
   var cells, data, arcs;
-      
+
   d3.json("./data1.json", function (data1) {
     data = data1;
-    
+
     cells = svg.data([data]).selectAll("rect")
         .data(treemap);
-    
+
     cells
         .enter().append("g")
         .attr("class", "cell")
@@ -39,7 +39,7 @@ $(document).ready(function() {
         .attr("id", function(d) { return d.data.name; })
         .style("fill", function(d, i) { return cellColor(i) })
         .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-    
+
     arcs = cells.filter(function(d) { return (d.children) ? false : true; }).selectAll("g.slice")
         .data(function (d) {
           for (var i in d.data.shards) {
@@ -59,9 +59,8 @@ $(document).ready(function() {
     cells.exit().remove();
     arcs.exit().remove();
   });
-  
-  
-  function draw(data) {
+
+  d3.select("body").on("click", function() {
     cells = svg.data([data]).selectAll("rect")
         .data(treemap);
     
@@ -71,7 +70,7 @@ $(document).ready(function() {
         .attr("id", function(d) { return d.data.name; })
         .style("fill", function(d, i) { return cellColor(i) })
         .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-    
+
     arcs = cells.filter(function(d) { return (d.children) ? false : true; }).selectAll("path")
         .data(function (d) {
           for (var i in d.data.shards) {
@@ -79,13 +78,13 @@ $(document).ready(function() {
           }
           return pie(d.data.shards);
         });
-  
+
     arcs
         .attr("fill", function(d) { return pieColor(d.data._id); })
         .attr("class", function(d) { return d.data._id; })
         .attr("d", function (d) { return arc(d); });
-  }
-  
+  });
+
   setTimeout(function() { d3.json("./data2.json", function (data2) {
     data = data2;
     draw(data); });
