@@ -1,0 +1,15 @@
+#drawboard {
+    margin-right: auto;
+    margin-left: auto;
+    display: block;
+}
+
+#chart {
+    margin-right: auto;
+    margin-left: auto;
+    display: block;
+}
+.shard {
+    stroke: none;
+    fill: #F6F4CD;
+}
