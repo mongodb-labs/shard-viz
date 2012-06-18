@@ -29,7 +29,7 @@ function formatData(collections, shards, chunks) {
       shards[k].chunks = [];
       for (var l in chunks) {
         if (shards[k]._id == chunks[l].shard && chunks[l].ns == child.name) {
-	         shards[k].chunks.push(chunks[l]);
+           shards[k].chunks.push(chunks[l]);
         }
       }
       if (shards[k].chunks.length > 0) {
