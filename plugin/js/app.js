@@ -1,97 +1,63 @@
-$(document).ready(function() {
-  var width = 1024,
-      height = 700,
-      cellColor = d3.scale.category20(),
-      pieColor = d3.scale.category20c(),
-      host = ['127.0.0.1', '5004', '', ''];
 
-  var svg = d3.selectAll("#drawboard").append("svg")
-      .attr("width", width)
-      .attr("height", height);
+var data = data1;
 
-  var treemap = d3.layout.treemap()
-      .size([width, height])
-      .sticky(true) // may need to change this
-      .value(function(d) { return d.size; });
+var width = 1024,
+    height = 700,
+    cellColor = d3.scale.category20();
 
-  var arc = d3.svg.arc()
-      .innerRadius(function (d) { return (Math.min(d.data.parent.dy, d.data.parent.dx)/2) - 20; })
-      .outerRadius(function (d) { var innerRadius = ((Math.min(d.data.parent.dy, d.data.parent.dx)/2) - 20); return innerRadius - (innerRadius/2.5); });
+var treemap = d3.layout.treemap()
+    .size([width, height])
+    .sticky(false)
+    .children( function(d) { return d.children } )
+    .value(function(d) { return d.size; });
 
-  var pie = d3.layout.pie()
-      .value(function(d) { return d.chunks.length; });
+var div = d3.select("#drawboard").append("div")
+    .style("position", "relative")
+    .style("width", width)
+    .style("height", height);
 
-  var cells, data, arcs;
+var cells = div.data([data]).selectAll("div")
+    .data(treemap);
 
-  d3.json("./data1.json", function (data1) {
-    data = data1;
+cells.enter().append("div")
+    .attr("class", function(d){ return "cell";})
+    .style("background-color", function(d, i) { return d.children ? null : cellColor(i); })
+    .attr("id", function(d) { return d.name; })
+    .call(cell);
 
-    cells = svg.data([data]).selectAll("rect")
-        .data(treemap);
+cells.exit().remove();
 
-    cells
-        .enter().append("g")
-        .attr("class", "cell")
-      .append("rect")
-        .attr("class", "block")
-        .attr("width", function(d) { return d.dx; })
-        .attr("height", function(d) { return d.dy; })
-        .attr("id", function(d) { return d.data.name; })
-        .style("fill", function(d, i) { return cellColor(i) })
-        .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+d3.select("#draw").on("click", function() {
 
-    arcs = cells.filter(function(d) { return (d.children) ? false : true; }).selectAll("g.slice")
-        .data(function (d) {
-          for (var i in d.data.shards) {
-            d.data.shards[i].parent = d;
-          }
-          return pie(d.data.shards);
-        });
-  
-    arcs.enter().append("g")
-        .attr("class", "slice")
-        .attr("transform", function (d) { return "translate(" + d.data.parent.dx / 2 + ", " + d.data.parent.dy / 2 +")"; })
-      .append("path")
-        .attr("fill", function(d) { return pieColor(d.data._id); })
-        .attr("class", function(d) { return d.data._id; })
-        .attr("d", function (d) { return arc(d); });
+  data = data === data1 ? data3 : data1;
+
+  cells = div.data([data]).selectAll("div")
+      .data(function(d){ return treemap(d); });
+
+  cells.enter().append("div")
+      .style("width", "0")
+      .style("height", "0");
+
+  cells
+    .transition()
+      .duration(500)
+      .call(cell);
+
+  cells.exit().remove();
     
-    cells.exit().remove();
-    arcs.exit().remove();
-  });
-
-  d3.select("body").on("click", function() {
-    cells = svg.data([data]).selectAll("rect")
-        .data(treemap);
-    
-    cells
-        .attr("width", function(d) { return d.dx; })
-        .attr("height", function(d) { return d.dy; })
-        .attr("id", function(d) { return d.data.name; })
-        .style("fill", function(d, i) { return cellColor(i) })
-        .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-
-    arcs = cells.filter(function(d) { return (d.children) ? false : true; }).selectAll("path")
-        .data(function (d) {
-          for (var i in d.data.shards) {
-            d.data.shards[i].parent = d;
-          }
-          return pie(d.data.shards);
-        });
-
-    arcs
-        .attr("fill", function(d) { return pieColor(d.data._id); })
-        .attr("class", function(d) { return d.data._id; })
-        .attr("d", function (d) { return arc(d); });
-  });
-
-  setTimeout(function() { d3.json("./data2.json", function (data2) {
-    data = data2;
-    draw(data); });
-    }, 2000);
-  
-  d3.select("#draw").on("click", function () {
-    draw(data);
-  });
 });
+
+
+
+function cell() {
+  this
+      .attr("id", function(d) { return d.data.name; })
+      .attr("class", function(d){ return "cell";})
+      .style("background-color", function(d, i) { return d.children ? null : cellColor(i); })
+      .style("left", function(d) { return d.x + "px"; })
+      .style("top", function(d) { return d.y + "px"; })
+      .style("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
+      .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
+}
+
 // vim: set et sw=2 ts=2;
