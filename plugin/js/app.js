@@ -1,8 +1,8 @@
-
-var data = data2;
+var data = data1;
 
 var width = 1024,
     height = 700,
+    host = ['127.0.0.1', '5004', '', ''],
     cellColor = d3.scale.category20b(),
     pieColor = d3.scale.category10();
 
@@ -14,7 +14,7 @@ var treemap = d3.layout.treemap()
 
 
 var div = d3.select("#drawboard").append("div")
-    .style("position", "relative")
+//    .style("position", "relative")
     .style("width", width)
     .style("height", height);
 
@@ -58,49 +58,54 @@ var arcEntering = arcs.enter();
 arcEntering.append("svg:path")
     .call(updatePie);
 
-d3.select("#draw").on("click", function() {
-
-  data = data === data1 ?  data3 : data1;
-
-  cells = div.data([data]).selectAll("div")
-      .data(treemap);
-
-  cells.enter().append("div")
-      .style("width", "0")
-      .style("height", "0");
+setInterval(function () {
+  getCollections(host, function (collections) {
+    getShards(host, function (shards) {
+      getChunks(host, function (chunks) {
+        data = formatData(collections.rows, shards.rows, chunks.rows); 
+	console.log(data);
   
-  cells
-      .attr("id", function(d) { return d.data.name; })
-      .attr("class", function(d){ return d.children ? "root cell" : "child cell";});
-
-  d3.selectAll("svg").remove();
-
-  svg = d3.selectAll(".child.cell").append("svg:svg")
-      .attr("width", function(d) { return d.dx; })
-      .attr("height", function(d) { return d.dy; })
-    .append("svg:g");
-
-  arcs = svg.selectAll("path")
-     .data(function (d) {
-             for (var i in d.data.shards) {
-              d.data.shards[i].parent = d;
-            }
-            return pie(d.data.shards);
-          });
-
-  arcEntering = arcs.enter();
-
-  arcEntering.append("svg:path")
-    .call(updatePie);
-
-  cells.transition()
-      .duration(500)
-      .call(updateCell);
-
-  cells.exit().remove();
-  arcs.exit().remove();
-
-});
+        cells = div.data([data]).selectAll("div")
+            .data(treemap);
+  
+        cells.enter().append("div")
+            .style("width", "0")
+            .style("height", "0");
+        
+        cells
+            .attr("id", function(d) { return d.data.name; })
+            .attr("class", function(d){ return d.children ? "root cell" : "child cell";});
+  
+        d3.selectAll("svg").remove();
+  
+        svg = d3.selectAll(".child.cell").append("svg:svg")
+            .attr("width", function(d) { return d.dx; })
+            .attr("height", function(d) { return d.dy; })
+          .append("svg:g");
+  
+        arcs = svg.selectAll("path")
+           .data(function (d) {
+                   for (var i in d.data.shards) {
+                    d.data.shards[i].parent = d;
+                  }
+                  return pie(d.data.shards);
+                });
+  
+        arcEntering = arcs.enter();
+  
+        arcEntering.append("svg:path")
+          .call(updatePie);
+  
+        cells.transition()
+            .duration(500)
+            .call(updateCell);
+  
+        cells.exit().remove();
+        arcs.exit().remove();
+      });
+    });
+  });
+}, 500);
 
 
 function updatePie() {
