@@ -63,7 +63,6 @@ setInterval(function () {
     getShards(host, function (shards) {
       getChunks(host, function (chunks) {
         data = formatData(collections.rows, shards.rows, chunks.rows); 
-	console.log(data);
   
         cells = div.data([data]).selectAll("div")
             .data(treemap);

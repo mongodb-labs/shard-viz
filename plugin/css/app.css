@@ -1,7 +1,10 @@
+.constrain {
+	width: 1000px;
+	margin: 40px auto;
+}
+
 #drawboard {
-    margin-right: auto;
-    margin-left: auto;
-    display: block;
+	position: relative;
 }
 
 #chart {
