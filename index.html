@@ -57,7 +57,7 @@
 //		}
 //	    }
 
-	    var host = ['127.0.0.1', '5002', '', ''];
+	    var host = ['127.0.0.1', '5004', '', ''];
 	    setInterval(function () {
 		getShards(host, function (data) {
 			shards = data.rows;
@@ -159,12 +159,8 @@
 
 		function chunkXPos(d, selection) {
 		    var num = d.num.chunk; // the position in this shard's chunk list
-		    console.log(num);
 		    var shardx = shardXPos(d.num.shard);
-		    console.log(shardx);
 		    var x = shardx + ((num % cperrow)*($(selection).attr("width"))) + (chunkPad*((num % cperrow)+1));
-		    console.log(num);
-		    console.log(x);
 		    return x;
 		}
 
