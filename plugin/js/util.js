@@ -43,6 +43,33 @@ function formatData(collections, shards, chunks) {
   return data;
 }
 
+/* Given the output of treemap(formatData()), return a list of shards to be used 
+   for graphing pie charts 
+ */
+function formatShards(data) {
+  var shards = [];
+  var pos = 0;
+  for (var i in data) {
+    if (!data[i].children) {
+      var shard = {};
+      shard.data = data[i].data;
+      shard.x = data[i].x;
+      shard.y = data[i].y;
+      shard.dx = data[i].dx;
+      shard.dy = data[i].dy;
+
+      // add dx and dy to each shard
+      for (var j in shard.data.shards) {
+        shard.data.shards[j].dx = data[i].dx;
+        shard.data.shards[j].dy = data[i].dy;
+
+      }
+      shards[pos++] = shard;
+    }
+  }
+  return shards; 
+}
+
 /* Returns a value copy of the given object
  */
 function clone(source) {
@@ -55,5 +82,9 @@ function clone(source) {
     }
   }
 }
+
+
+// For cleaning up db json objects; Taken from mongo shell source
+var clean = function (s) {s = s.replace(/NumberInt\((\-?\d+)\)/g, "$1");return s;};
 
 // vim: set et sw=2 ts=2;
