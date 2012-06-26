@@ -88,7 +88,7 @@ function collections() {
       .data(treemap);
 
     var pies = selection.selectAll("g")
-      .data(formatShards(cells.data());
+      .data(formatShards(cells.data()));
 
     var arcs = pies.selectAll("path")
       .data(function (d) { return pie(d.data.shards); });
