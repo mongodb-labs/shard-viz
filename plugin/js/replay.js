@@ -140,8 +140,6 @@ var configRewind = function ( chunks , changeLogData , startIdx , endIdx ){
           max = rightData.max ,  
           shard = leftData.shard;
 
-console.log(_id);
-
       var origData = { _id : _id , 
                        lastmod : lastmod , 
                        ns : ns , 
