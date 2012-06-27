@@ -1,13 +1,13 @@
-function collections() {
+function collections( selection ) {
   var width = 1024,
       height = 700,
-      delay = 500, // transition delay in milliseconds
+      delay = 250, // transition delay in milliseconds
       cellColor = d3.scale.category20b(),
       pieColor = d3.scale.category10();
   
   var treemap = d3.layout.treemap()
     .size([width, height])
-    .sticky(true)
+    .sticky(false)
     .children(function(d) { return d.children; })
     .value(function(d) { return d.size; });
 
@@ -20,6 +20,11 @@ function collections() {
   var pie = d3.layout.pie().sort(null)
     .value(function(d) { return d.chunks.length; });
   
+  var board = selection.append("svg:svg")
+    .style("width", width)
+    .style("height", height)
+    .attr("id", "treemap");
+
   /* Given the output of treemap(formatData()), return a list of shards to be used 
    * for graphing pie charts 
    */
@@ -78,29 +83,25 @@ function collections() {
       .attr("d", function (d) { return arc(d); });
   }
 
-  function chart(selection, data) {
-    var board = selection.append("svg:svg")
-      .style("width", width)
-      .style("height", height)
-      .attr("id", "treemap");
-
+  function chart( data ) {
     var cells = board.data([data]).selectAll("rect")
       .data(treemap);
 
-    var pies = selection.selectAll("g")
+    var pies = board.selectAll("g")
       .data(formatShards(cells.data()));
 
     var arcs = pies.selectAll("path")
       .data(function (d) { return pie(d.data.shards); });
 
     // Enter Cells
+    // console.log(cells.enter());
     cells.enter().append("rect")
       .attr("id", function(d) { return d.data.name; })
-      .attr("class", function(d){ return d.children ? "root cell" : "child cell";});
+      .attr("class", function(d){ return d.children ? "root cell" : "child cell"; });
 
     // Update Cells
-    cells.transition()
-      .duration(delay)
+    cells//.transition()
+      //.duration(delay)
       .call(updateCells);
 
     // Exit Cells
@@ -110,8 +111,8 @@ function collections() {
     pies.enter().append("svg:g");
 
     // Update Pie charts
-    pies.transition()
-      .duration(delay)
+    pies//.transition()
+      //.duration(delay)
       .call(updatePies);
 
     // Exit Pie charts
@@ -121,8 +122,8 @@ function collections() {
     arcs.enter().append("svg:path");
 
     // Update Arcs
-    arcs.transition()
-      .duration(delay)
+    arcs//.transition()
+      //.duration(delay)
       .call(updateArcs);
 
     // Exit Arcs

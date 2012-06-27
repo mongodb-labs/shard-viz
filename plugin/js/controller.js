@@ -2,8 +2,10 @@ var Controller = (function(){
 
 	// Private variables
 
-	var dbData = [];
-	var replayData = [];
+	var source; 
+	var dbData;
+	var replayData;
+	var colls;
 
 
 	// Private methods
@@ -50,35 +52,36 @@ var Controller = (function(){
 
 	function drawCollections( data ){
 		var formattedData;
-		if( this.source == "db" ) formattedData = formatCollectionsData(dbData);
-		if( this.source == "replay") formattedData = formatCollectionsData(replaydata);
-		collections.PhillipsMethod( this.container , formattedData );
+		if( source == "db" ) formattedData = formatCollectionsData(dbData.collections, dbData.shards, dbData.chunks);
+		if( source == "replay") formattedData = formatCollectionsData(replaydata);
+		colls( formattedData );
 	}
 
-	function init( container ){
-		if( typeof mode == "undefined" || typeof mode != "string" ) return;
-		controller.container = $(container);
-		controller.source = "db" ;
+	function init( cntr ){
+		if( typeof container == "undefined" ) return;
+		container = cntr;
+		source = "db" ;
+		colls = collections( container );
 	}
 
 
-	function setSource( source ){
+	function setSource( src ){
 		if( typeof source == "undefined" || typeof source != "string" ) return;
 		if( source != "db" && source != "replay" ) return;
-		this.source = source;
+		source = src;
 	}
 
 	function setData( data ){
 		if( typeof data == "undefined" ) return;
-		if( this.source == "db" ) dbData = data;
-		if( this.source == "replay" ) replayData = data; 
+		if( source == "db" ) dbData = data;
+		if( source == "replay" ) replayData = data; 
 	}
 
-	function processData( mode , data ){
+	function processData( mode ){
 		if( typeof mode == "undefined" || typeof mode != "string" ) return;
 		switch(mode) {
 			case "collections" : {
-				drawCollections( data );
+				drawCollections();
 			}
 			case "shards" : {
 
@@ -90,6 +93,7 @@ var Controller = (function(){
 
 	return {
 		init : init,
+		setData : setData,
 		processData : processData
 	}
 
