@@ -62,6 +62,10 @@ function getCollections(host, success, failure, cmdError, notFound, serverError)
     queryDB(('http://' + host[0] + ':' + host[1] + '/config/collections/'), host[2], host[3], success, failure, cmdError, notFound, serverError);
 };
 
+function getInitCollEvent( host , collection , success , failure , cmdError , notFound , serverError ){
+    queryDB(('http://' + host[0] + ':' + host[1] + '/config/changelog/' + '?filter_ns=' + collection + '&limit=1' ), host[2], host[3], success, failure, cmdError, notFound, serverError);
+};
+
 /**
  * There is a date format bug in some older versions of Mongo. Thanks to Lucas for 
  * submitting part of the regex solution :-)

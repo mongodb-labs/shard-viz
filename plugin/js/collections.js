@@ -87,17 +87,13 @@ function collections( selection ) {
     var cells = board.data([data]).selectAll("rect")
       .data(treemap);
 
-    var pies = board.selectAll("g")
-      .data(formatShards(cells.data()));
-
-    var arcs = pies.selectAll("path")
-      .data(function (d) { return pie(d.data.shards); });
-
     // Enter Cells
-    // console.log(cells.enter());
     cells.enter().append("rect")
       .attr("id", function(d) { return d.data.name; })
       .attr("class", function(d){ return d.children ? "root cell" : "child cell"; });
+
+    var pies = board.selectAll("g")
+      .data(formatShards(cells.data()));
 
     // Update Cells
     cells//.transition()
@@ -109,6 +105,9 @@ function collections( selection ) {
 
     // Enter Pie charts
     pies.enter().append("svg:g");
+
+    var arcs = pies.selectAll("path")
+      .data(function (d) { return pie(d.data.shards); });
 
     // Update Pie charts
     pies//.transition()
