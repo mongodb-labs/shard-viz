@@ -1,5 +1,3 @@
-// collections.js
-
 function collections( selection ) {
 
   var width = 1024,
@@ -20,7 +18,7 @@ function collections( selection ) {
     .outerRadius(function(d) { var innerRadius = 
                                ((Math.min(height, width)/2) - 20);
                                return Math.ceil(innerRadius - (innerRadius/2.5)); });
-  
+
   var arc = d3.svg.arc()
     .innerRadius(function(d) { return Math.ceil((Math.min(d.data.dy, d.data.dx)/2) - 20); })
     .outerRadius(function(d) { var innerRadius = 
@@ -39,7 +37,6 @@ function collections( selection ) {
       .attr("height", height)
 
   d3.selection.prototype.moveToFront = function() { 
-    console.log(this);
     return this.each(function() { 
     this.parentNode.appendChild(this); 
     }); 
@@ -82,7 +79,6 @@ function collections( selection ) {
 
   function updateCells(d) {
     //Update the rects contained in the g elements
-    console.log(this);
     this.select("rect")
       .style("fill", function(d, i) { return d.children ? null : cellColor(d.data.name); })
       .attr("x", function(d) { return d.x + "px"; })
@@ -107,7 +103,6 @@ function collections( selection ) {
   }
 
   function updateZoomed() {
-      console.log(this); 
     this
       .attr("transform", function (d) { return "translate(" + width / 2 + ", " + height / 2 +")"; })
       .attr("fill", function(d) { return pieColor(d.data._id); })
@@ -123,7 +118,6 @@ function collections( selection ) {
     // Unzoom
     if ( zoomed && zoomed === group.attr("id")) {
       zoomed = null;
-      console.log(data);
       rect.moveToFront().transition()
         .duration(delay)
           .attr("x", data.x)
@@ -135,15 +129,14 @@ function collections( selection ) {
         .call(updatePies).selectAll("path")
   .call(updateArcs);
     } else { // Zoom
-      group.moveToFront();
       zoomed = group.attr("id");
+      group.moveToFront();
       rect//.moveToFront()//.transition()
         //.duration(delay)
           .attr("x", 0)
           .attr("y", 0)
           .attr("width", width + "px")
           .attr("height", height + "px");
-      console.log(rect.attr("height"));
       pie//.moveToFront()
         .transition().duration(delay)
     .attr("width", width)
@@ -153,7 +146,6 @@ function collections( selection ) {
           //.attr("transform", "translate(" + width/2 + ", " + height/2 +")")
     //.attr("d", function (d) { return arc(d); })
         .call(updateZoomed); 
-      console.log(d);
     }
   }
 
@@ -189,7 +181,7 @@ function collections( selection ) {
     cells.exit().remove();
 
     // Enter pies and arcs
-    cellEnter.each(function(d) {
+    cellEnter.filter(function(d) { return d.data.name==zoomed ? false:true; }).each(function(d) {
       if (d.children) return;
 
       var cell = d3.select(this);
@@ -220,7 +212,8 @@ function collections( selection ) {
     });
 
     // Update pies and arcs
-    cells.each(function (d) {
+    cells.filter(function(d) { return d.data.name==zoomed ? false:true; }).each(function (d) {
+      console.log(this);
       if (d.children) return;
 
       var cell = d3.select(this); 
