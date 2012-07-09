@@ -61,7 +61,7 @@ function collections( selection ) {
         for (var j in shard.data.shards) {
           shard.data.shards[j].dx = data[i].dx;
           shard.data.shards[j].dy = data[i].dy;
-	  shard.data.shards[j].collection = data[i].data.name;
+    shard.data.shards[j].collection = data[i].data.name;
         }   
         shards[pos++] = shard;
       }   
@@ -127,7 +127,7 @@ function collections( selection ) {
       pie.moveToFront()
         .transition().duration(delay)
         .call(updatePies).selectAll("path")
-	.call(updateArcs);
+  .call(updateArcs);
     } else { // Zoom
       zoomed = group.attr("id");
       group.moveToFront();
@@ -139,12 +139,12 @@ function collections( selection ) {
           .attr("height", height + "px");
       pie//.moveToFront()
         .transition().duration(delay)
-	  .attr("width", width)
-	  .attr("height", height)
+    .attr("width", width)
+    .attr("height", height)
           .attr("transform", "translate(0,0)")
         .selectAll("path")
           //.attr("transform", "translate(" + width/2 + ", " + height/2 +")")
-	  //.attr("d", function (d) { return arc(d); })
+    //.attr("d", function (d) { return arc(d); })
         .call(updateZoomed); 
     }
   }
@@ -192,7 +192,7 @@ function collections( selection ) {
       // Update Pie charts
       pies.filter(function(d) { return d.data.name == zoomed ? false : true; }).transition()
         .duration(delay)
-	.call(updatePies);
+  .call(updatePies);
 
       var arcs = pies.selectAll("path")
         .data(function (d) { return pie(d.data.shards); });
@@ -222,15 +222,15 @@ function collections( selection ) {
       // Update Pie charts
       pies.filter(function(d) { return d.data.name == zoomed ? false : true; }).transition()
         .duration(delay)
-	.call(updatePies);
+  .call(updatePies);
 
       var arcs = pies.selectAll("path")
         .data(function (d) { return pie(d.data.shards); });
 
       // Update unzoomed arcs
       arcs.filter(function(d) { return (d.data.collection == zoomed) ? false : true; })//.transition()
-//	.duration(delay)
-	.call(updateArcs);
+//  .duration(delay)
+  .call(updateArcs);
     });
     
     // Zooming

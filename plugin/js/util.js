@@ -1,3 +1,5 @@
+// util.js
+
 /* Given an array of collections and chunks
  * returns the collections array with chunks and shards
  * appended to each collection. The number of chunks is 
@@ -107,8 +109,22 @@ function clone(source) {
   }
 }
 
-
 // For cleaning up db json objects; Taken from mongo shell source
 var clean = function (s) {s = s.replace(/NumberInt\((\-?\d+)\)/g, "$1");return s;};
+
+// Local storage utils
+function getPersistedItem(key) {
+    var value;
+    try { value = window.localStorage.getItem(key);
+    } catch(e) { value = null; }
+    if (value) return JSON.parse(value);
+    return null;
+};
+
+function persistItem(key, value) {
+    window.localStorage.setItem(key, JSON.stringify(value));
+};
+
+function removeItem(key) { window.localStorage.removeItem(key); };
 
 // vim: set et sw=2 ts=2;

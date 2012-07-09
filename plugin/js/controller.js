@@ -1,3 +1,5 @@
+// controller.js
+
 var Controller = (function(){
 
 	// Private variables
@@ -37,7 +39,7 @@ var Controller = (function(){
   	    shards[k].chunks = [];
   	    for (var l in chunks) {
   	      if (shards[k]._id == chunks[l].shard && chunks[l].ns == child.name) {
-  	         shards[k].chunks.push(chunks[l]);
+  	        shards[k].chunks.push(chunks[l]);
   	      }
   	    }
   	    if (shards[k].chunks.length > 0) {
@@ -52,14 +54,15 @@ var Controller = (function(){
 	function drawCollections( data ){
 		var formattedData;
 		if( source == "db" ) formattedData = formatCollectionsData(dbData.collections, dbData.shards, dbData.chunks);
-		if( source == "replay") formattedData = formatCollectionsData(replaydata);
-		colls( formattedData );
+		if( source == "replay") formattedData = formatCollectionsData(replayData.collections , replayData.shards , replayData.chunks);
+    if( formattedData.children.length != 0 )
+      colls( formattedData );
 	}
 
 	function init( cntr ){
 		if( typeof container == "undefined" ) return;
 		container = cntr;
-		source = "db" ;
+		source = "db" ; // Defaults to db
 		colls = collections( container );
 	}
 
@@ -93,6 +96,7 @@ var Controller = (function(){
 	return {
 		init : init,
 		setData : setData,
+		setSource : setSource ,
 		processData : processData
 	}
 
