@@ -3,20 +3,23 @@ $(document).ready(function(){
   Controller.init( d3.select("#drawboard") );
   host = ['127.0.0.1', '5004', '', ''];
   
-  setInterval(function () {
-    getCollections(host, function (collections) {
-      getShards(host, function (shards) {
-        getChunks(host, function (chunks) {
-  
-          var data = {collections : collections.rows , shards : shards.rows , chunks : chunks.rows };
+  update = function () {
+    interval = setInterval(function () {
+      getCollections(host, function (collections) {
+        getShards(host, function (shards) {
+          getChunks(host, function (chunks) {
+    
+	    var dat = formatShardsData(collections.rows, shards.rows, chunks.rows);
+            var data = {collections : collections.rows , shards : shards.rows , chunks : chunks.rows };
 
-          Controller.setData( data );
-          Controller.processData( "collections" );
-  
+            Controller.setData( data );
+            Controller.processData( "collections" );
+    
+          });
         });
       });
-    });
-  }, 500);
+    }, 2000);
+  }
 
 });
 

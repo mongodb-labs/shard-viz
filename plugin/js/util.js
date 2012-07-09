@@ -70,6 +70,30 @@ function formatShards(data) {
   return shards; 
 }
 
+function formatShardsData(collections, shards, chunks) {
+  var data = [];
+  var byShard = _.groupBy(chunks, 'shard');
+  var byCollection = _.groupBy(chunks, 'ns'); 
+  // Init collections object for each shard
+  for (var i in shards) {
+    shards[i].collections = {};
+    for (var j in collections) {
+      shards[i].collections[collections[j]._id] = []; 
+    }
+  }
+  // Insert chunks into each collection in each shard
+  for (var i in shards) {
+    _.each(shards[i].collections, function (arr, coll) {
+      for (var j in byShard[shards[i]._id]) {
+	if (byShard[shards[i]._id][j].ns == coll) {
+          arr.push(byShard[shards[i]._id][j]);
+	}
+      }
+    });
+  }
+  return shards;
+}
+
 /* Returns a value copy of the given object
  */
 function clone(source) {

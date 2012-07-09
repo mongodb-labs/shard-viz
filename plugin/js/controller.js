@@ -7,7 +7,6 @@ var Controller = (function(){
 	var replayData;
 	var colls;
 
-
 	// Private methods
 
 	// Collections view logic
@@ -98,24 +97,3 @@ var Controller = (function(){
 	}
 
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
