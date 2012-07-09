@@ -1,3 +1,5 @@
+// db.js
+
 $.base64.is_unicode = true;
 
 function queryDB(commandUrl, username, password, success, failure, cmdError, notFound, serverError) {

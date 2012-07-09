@@ -1,3 +1,5 @@
+// controller.js
+
 var Controller = (function(){
 
 	// Private variables
@@ -6,7 +8,6 @@ var Controller = (function(){
 	var dbData;
 	var replayData;
 	var colls;
-
 
 	// Private methods
 
@@ -54,7 +55,8 @@ var Controller = (function(){
 		var formattedData;
 		if( source == "db" ) formattedData = formatCollectionsData(dbData.collections, dbData.shards, dbData.chunks);
 		if( source == "replay") formattedData = formatCollectionsData(replayData.collections , replayData.shards , replayData.chunks);
-    colls( formattedData );
+    if( formattedData.children.length != 0 )
+      colls( formattedData );
 	}
 
 	function init( cntr ){
@@ -99,24 +101,3 @@ var Controller = (function(){
 	}
 
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

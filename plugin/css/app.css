@@ -7,19 +7,48 @@ body {
 
 .constrain {
 	margin:30px auto;
-	width:950px;
+	width:1030px;
+	height:700px;
 }
 
 #container {
+	top : -10px;
 	position : relative;
 }
 
 
 #drawboard {
-	position: absolute;
+	position : absolute;
 	display: block;
 }
 
+#player {
+	position : absolute;
+	width : 100%;
+	bottom : 10px;
+	top: 100%;
+	margin : 0px auto;
+}
+
 #slider {
-	top : -20px;
+	position : absolute ;
+	left : 90px;
+	bottom : -25px;
+	width: 80%;
+
+    /*margin: 0px auto;*/
+}
+
+h1.title {
+	font-family: "Helvetica Neue", Helvetica;
+	font-size: 45px;
+	color: grey;
+	margin: 30px;
+}
+
+}
+#play {
+	position : absolute;
+	left : 20px;
+	bottom : 0px;
 }

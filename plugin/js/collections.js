@@ -1,16 +1,26 @@
+// collections.js
+
 function collections( selection ) {
+
   var width = 1024,
       height = 700,
       delay = 250, // transition delay in milliseconds
       cellColor = d3.scale.category20b(),
       pieColor = d3.scale.category10();
-  
+      zoomed = null; // g id of zoomed cell
+
   var treemap = d3.layout.treemap()
     .size([width, height])
     .sticky(false)
     .children(function(d) { return d.children; })
     .value(function(d) { return d.size; });
 
+  var zoomedArc = d3.svg.arc()
+    .innerRadius(function(d) { return Math.ceil((Math.min(height, width)/2) - 20); })
+    .outerRadius(function(d) { var innerRadius = 
+                               ((Math.min(height, width)/2) - 20);
+                               return Math.ceil(innerRadius - (innerRadius/2.5)); });
+  
   var arc = d3.svg.arc()
     .innerRadius(function(d) { return Math.ceil((Math.min(d.data.dy, d.data.dx)/2) - 20); })
     .outerRadius(function(d) { var innerRadius = 
@@ -21,12 +31,22 @@ function collections( selection ) {
     .value(function(d) { return d.chunks.length; });
   
   var board = selection.append("svg:svg")
-    .style("width", width)
-    .style("height", height)
-    .attr("id", "treemap");
+      .style("width", width)
+      .style("height", height)
+    .append("svg:g")
+      .attr("id", "treemap")
+      .attr("width", width)
+      .attr("height", height)
+
+  d3.selection.prototype.moveToFront = function() { 
+    console.log(this);
+    return this.each(function() { 
+    this.parentNode.appendChild(this); 
+    }); 
+  }; 
 
   /* Given the output of treemap(formatData()), return a list of shards to be used 
-   * for graphing pie charts 
+   * for graphing pie charts. Modifies data.data.shards to add dx and dy of parent cell
    */
   function formatShards(data) {
     var shards = []; 
@@ -44,6 +64,7 @@ function collections( selection ) {
         for (var j in shard.data.shards) {
           shard.data.shards[j].dx = data[i].dx;
           shard.data.shards[j].dy = data[i].dy;
+    shard.data.shards[j].collection = data[i].data.name;
         }   
         shards[pos++] = shard;
       }   
@@ -59,9 +80,11 @@ function collections( selection ) {
     };  
   }
 
-  function updateCells() {
-    this
-      .style("fill", function(d, i) { return d.children ? null : cellColor(i); })
+  function updateCells(d) {
+    //Update the rects contained in the g elements
+    console.log(this);
+    this.select("rect")
+      .style("fill", function(d, i) { return d.children ? null : cellColor(d.data.name); })
       .attr("x", function(d) { return d.x + "px"; })
       .attr("y", function(d) { return d.y + "px"; })
       .attr("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
@@ -80,53 +103,145 @@ function collections( selection ) {
       .attr("transform", function (d) { return "translate(" + d.data.dx / 2 + ", " + d.data.dy / 2 +")"; })
       .attr("fill", function(d) { return pieColor(d.data._id); })
       .attr("class", function(d) { return d.data._id; })
-      .attr("d", function (d) { return arc(d); });
+      .attr("d", function(d) { return arc(d); });
   }
 
+  function updateZoomed() {
+      console.log(this); 
+    this
+      .attr("transform", function (d) { return "translate(" + width / 2 + ", " + height / 2 +")"; })
+      .attr("fill", function(d) { return pieColor(d.data._id); })
+      .attr("class", function(d) { return d.data._id; })
+      .attr("d", function(d) { return zoomedArc(d); });
+  }
+
+  function zoom(d) {
+    var group = d3.select(this);
+    var pie = group.select("g.pie");
+    var rect = group.select("rect");
+    var data = rect.data()[0];
+    // Unzoom
+    if ( zoomed && zoomed === group.attr("id")) {
+      zoomed = null;
+      console.log(data);
+      rect.moveToFront().transition()
+        .duration(delay)
+          .attr("x", data.x)
+          .attr("y", data.y)
+          .attr("width", data.dx + "px")
+          .attr("height", data.dy + "px")
+      pie.moveToFront()
+        .transition().duration(delay)
+        .call(updatePies).selectAll("path")
+  .call(updateArcs);
+    } else { // Zoom
+      group.moveToFront();
+      zoomed = group.attr("id");
+      rect//.moveToFront()//.transition()
+        //.duration(delay)
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("width", width + "px")
+          .attr("height", height + "px");
+      console.log(rect.attr("height"));
+      pie//.moveToFront()
+        .transition().duration(delay)
+    .attr("width", width)
+    .attr("height", height)
+          .attr("transform", "translate(0,0)")
+        .selectAll("path")
+          //.attr("transform", "translate(" + width/2 + ", " + height/2 +")")
+    //.attr("d", function (d) { return arc(d); })
+        .call(updateZoomed); 
+      console.log(d);
+    }
+  }
+
+  function redraw() {
+    d3.select("#viewport").attr("transform",
+        "translate(" + d3.event.translate + ")"
+        + " scale(" + d3.event.scale + ")");
+  }
+  var prev = {};
+  var old = {};
+  var bold = {};
   function chart( data ) {
-    var cells = board.data([data]).selectAll("rect")
+
+    var cells = board.data([data]).selectAll("g.collection")
       .data(treemap);
 
     // Enter Cells
-    cells.enter().append("rect")
-      .attr("id", function(d) { return d.data.name; })
-      .attr("class", function(d){ return d.children ? "root cell" : "child cell"; });
-
-    var pies = board.selectAll("g")
-      .data(formatShards(cells.data()));
+    var cellEnter = cells.enter().append("svg:g")
+        .attr("id", function(d) { return d.data.name; })
+        .attr("class", function(d){ return d.children ? "root collection" : "child collection"; });
+    cellEnter
+      .append("rect")
+        .attr("class", "cell");
+    
+    formatShards(cells.data()); // add dx and dy to each shard
 
     // Update Cells
-    cells//.transition()
-      //.duration(delay)
+    cells.filter(function(d) { return d.data.name==zoomed ? false:true; }).transition()
+      .duration(delay)
       .call(updateCells);
 
     // Exit Cells
     cells.exit().remove();
 
-    // Enter Pie charts
-    pies.enter().append("svg:g");
+    // Enter pies and arcs
+    cellEnter.each(function(d) {
+      if (d.children) return;
 
-    var arcs = pies.selectAll("path")
-      .data(function (d) { return pie(d.data.shards); });
+      var cell = d3.select(this);
+      var pies = d3.select(this).selectAll("g.pie").data(cell.data());
+      pies.enter().append("svg:g")
+        .attr("class", function(d) { return "pie " + d.data.name.replace(/\./g, ""); });
 
-    // Update Pie charts
-    pies//.transition()
-      //.duration(delay)
-      .call(updatePies);
+      // Update Pie charts
+      pies.filter(function(d) { return d.data.name == zoomed ? false : true; }).transition()
+        .duration(delay)
+  .call(updatePies);
 
-    // Exit Pie charts
-    pies.exit().remove();
+      var arcs = pies.selectAll("path")
+        .data(function (d) { return pie(d.data.shards); });
 
-    // Enter Arcs
-    arcs.enter().append("svg:path");
+      // Enter Arcs
+      arcs.enter().append("svg:path")
+        .each(function(d){ this._current = d; });
 
-    // Update Arcs
-    arcs//.transition()
-      //.duration(delay)
-      .call(updateArcs);
+      // Update Arcs
+      arcs.transition()
+        .duration(delay)
+        .call(updateArcs);
 
-    // Exit Arcs
-    arcs.exit().remove();
+      // Exit Arcs
+      arcs.exit().remove();
+
+    });
+
+    // Update pies and arcs
+    cells.each(function (d) {
+      if (d.children) return;
+
+      var cell = d3.select(this); 
+      var pies = d3.select(this).selectAll("g.pie").data(cell.data());
+
+      // Update Pie charts
+      pies.filter(function(d) { return d.data.name == zoomed ? false : true; }).transition()
+        .duration(delay)
+  .call(updatePies);
+
+      var arcs = pies.selectAll("path")
+        .data(function (d) { return pie(d.data.shards); });
+
+      // Update unzoomed arcs
+      arcs.filter(function(d) { return (d.data.collection == zoomed) ? false : true; })//.transition()
+//  .duration(delay)
+  .call(updateArcs);
+    });
+    
+    // Zooming
+    d3.selectAll("g.child.collection").on("click", zoom);
   }
   
   return chart;
