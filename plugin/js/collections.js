@@ -2,10 +2,11 @@ function collections( selection ) {
 
   var width = 1024,
       height = 700,
-      delay = 250, // transition delay in milliseconds
+      delay = 150, // transition delay in milliseconds
       cellColor = d3.scale.category20b(),
       pieColor = d3.scale.category10();
       zoomed = null; // g id of zoomed cell
+     
 
   var treemap = d3.layout.treemap()
     .size([width, height])
@@ -14,8 +15,8 @@ function collections( selection ) {
     .value(function(d) { return d.size; });
 
   var zoomedArc = d3.svg.arc()
-    .innerRadius(function(d) { return Math.ceil((Math.min(height, width)/2) - 20); })
-    .outerRadius(function(d) { var innerRadius = 
+    .innerRadius(function() { return Math.ceil((Math.min(height, width)/2) - 20); })
+    .outerRadius(function() { var innerRadius = 
                                ((Math.min(height, width)/2) - 20);
                                return Math.ceil(innerRadius - (innerRadius/2.5)); });
 
@@ -80,7 +81,7 @@ function collections( selection ) {
   function updateCells(d) {
     //Update the rects contained in the g elements
     this.select("rect")
-      .style("fill", function(d, i) { return d.children ? null : cellColor(d.data.name); })
+      .style("fill", function(d) { return d.children ? null : cellColor(d.data.name); })
       .attr("x", function(d) { return d.x + "px"; })
       .attr("y", function(d) { return d.y + "px"; })
       .attr("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
@@ -102,50 +103,104 @@ function collections( selection ) {
       .attr("d", function(d) { return arc(d); });
   }
 
-  function updateZoomed() {
+  // zoom cell to fit entire drawboard
+  function zoomCell() {
     this
-      .attr("transform", function (d) { return "translate(" + width / 2 + ", " + height / 2 +")"; })
+      .attr("fill", function(d) { return cellColor(d.data.name); })
+      .attr("x", function(d) { return "0px"; })
+      .attr("y", function(d) { return "0px"; })
+      .attr("width", width + "px")
+      .attr("height", height + "px");
+  }
+
+  // position based on data (used together with zoomCell() when animating a cell zoom)
+  function placeCell() {
+    this
+      .attr("fill", function(d) { return cellColor(d.data.name); })
+      .attr("x", function(d) { return d.x + "px"; })
+      .attr("y", function(d) { return d.y + "px"; })
+      .attr("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
+      .attr("height", function(d) { return Math.max(0, d.dy - 1) + "px"; })
+  }
+
+  function zoomPie() {
+    this
+      .attr("width", width) 
+      .attr("height", height)
+      .attr("transform", "translate(0,0)")
+  }
+
+  function placePie() {
+    this
+      .attr("width", function(d) { return d.dx; })
+      .attr("height", function(d) { return d.dy; })
+      .attr("transform", function (d) { return "translate(" + d.x + ", " + d.y + ")"; });
+  }
+
+  function placeArcs() {
+    this
+      .attr("transform", function (d) { return "translate(" + d.data.dx / 2 + ", " + d.data.dy / 2 +")"; })
+      .attr("fill", function(d) { return pieColor(d.data._id); })
+      .attr("class", function(d) { return d.data._id; })
+      .attr("d", function(d) { return arc(d); });
+  }
+
+  function zoomArcs() {
+    this
+      .attr("transform", function () { return "translate(" + width / 2 + ", " + height / 2 +")"; })
       .attr("fill", function(d) { return pieColor(d.data._id); })
       .attr("class", function(d) { return d.data._id; })
       .attr("d", function(d) { return zoomedArc(d); });
   }
 
   function zoom(d) {
-    var group = d3.select(this);
-    var pie = group.select("g.pie");
-    var rect = group.select("rect");
-    var data = rect.data()[0];
     // Unzoom
-    if ( zoomed && zoomed === group.attr("id")) {
+    if ( zoomed && d3.select(this).attr("class").search("zoomed") != -1) {
       zoomed = null;
-      rect.moveToFront().transition()
-        .duration(delay)
-          .attr("x", data.x)
-          .attr("y", data.y)
-          .attr("width", data.dx + "px")
-          .attr("height", data.dy + "px")
-      pie.moveToFront()
+      var z = d3.select(".zoomed");
+      z.select("rect.cell")
         .transition().duration(delay)
-        .call(updatePies).selectAll("path")
-  .call(updateArcs);
+	  .call(placeCell);
+
+      z.select("g.pie").selectAll("path")
+        .transition().duration(delay)
+	  .call(placeArcs);
+
+      z.select("g.pie")
+        .transition().duration(delay)
+	  .call(placePie);
+
+      z.transition().duration(delay).remove();
+
     } else { // Zoom
-      zoomed = group.attr("id");
-      group.moveToFront();
-      rect//.moveToFront()//.transition()
-        //.duration(delay)
-          .attr("x", 0)
-          .attr("y", 0)
-          .attr("width", width + "px")
-          .attr("height", height + "px");
-      pie//.moveToFront()
+      // create a new cell and pie chart, then position new group on current position, then animate the zooming
+      zoomed = d3.select(this).attr("id");
+      var z = d3.select("#treemap").append("svg:g")
+	  .attr("class", "zoomable zoomed")
+	  .data([d]);
+
+      // create the rect and animate zooming
+      z
+        .append("rect")
+          .attr("class", function(d) { return "cell"; })
+	  .call(placeCell)
         .transition().duration(delay)
-    .attr("width", width)
-    .attr("height", height)
-          .attr("transform", "translate(0,0)")
-        .selectAll("path")
-          //.attr("transform", "translate(" + width/2 + ", " + height/2 +")")
-    //.attr("d", function (d) { return arc(d); })
-        .call(updateZoomed); 
+	  .call(zoomCell);
+
+      // create the pie chart and animate zooming
+      z
+        .append("svg:g")
+          .attr("class", "pie")
+	  .call(placePie)
+        .transition().duration(delay) 
+          .call(zoomPie); 
+
+      // create the arcs of the pie chart and animate zooming
+      z.select("g.pie") // can't chain call onto previous block because .call(zoomPie) does not return the resulting selection
+	.selectAll("path").data(function(d) { return pie(d.data.shards); }).enter().append("svg:path")
+	  .call(placeArcs)
+        .transition().duration(delay)
+	  .call(zoomArcs);
     }
   }
 
@@ -154,18 +209,15 @@ function collections( selection ) {
         "translate(" + d3.event.translate + ")"
         + " scale(" + d3.event.scale + ")");
   }
-  var prev = {};
-  var old = {};
-  var bold = {};
-  function chart( data ) {
 
+  function chart( data ) {
     var cells = board.data([data]).selectAll("g.collection")
       .data(treemap);
 
     // Enter Cells
     var cellEnter = cells.enter().append("svg:g")
-        .attr("id", function(d) { return d.data.name; })
-        .attr("class", function(d){ return d.children ? "root collection" : "child collection"; });
+        .attr("id", function(d) { return d.data.name.replace(/\./g,''); })
+        .attr("class", function(d){ return d.children ? "root collection" : "child collection zoomable"; });
     cellEnter
       .append("rect")
         .attr("class", "cell");
@@ -173,15 +225,15 @@ function collections( selection ) {
     formatShards(cells.data()); // add dx and dy to each shard
 
     // Update Cells
-    cells.filter(function(d) { return d.data.name==zoomed ? false:true; }).transition()
-      .duration(delay)
+    cells.transition() // the zoomed is getting in here. 
+      .duration(function(d) { return delay; })
       .call(updateCells);
 
     // Exit Cells
     cells.exit().remove();
 
-    // Enter pies and arcs
-    cellEnter.filter(function(d) { return d.data.name==zoomed ? false:true; }).each(function(d) {
+    // Update and enter pies and arcs
+    cells.each(function (d) {
       if (d.children) return;
 
       var cell = d3.select(this);
@@ -190,9 +242,8 @@ function collections( selection ) {
         .attr("class", function(d) { return "pie " + d.data.name.replace(/\./g, ""); });
 
       // Update Pie charts
-      pies.filter(function(d) { return d.data.name == zoomed ? false : true; }).transition()
-        .duration(delay)
-  .call(updatePies);
+      pies.filter(function(d) { return d.data.name == zoomed ? false : true; }).transition().duration(delay)
+        .call(updatePies);
 
       var arcs = pies.selectAll("path")
         .data(function (d) { return pie(d.data.shards); });
@@ -204,17 +255,10 @@ function collections( selection ) {
       // Update Arcs
       arcs.transition()
         .duration(delay)
-        .call(updateArcs);
+          .call(updateArcs);
 
       // Exit Arcs
       arcs.exit().remove();
-
-    });
-
-    // Update pies and arcs
-    cells.filter(function(d) { return d.data.name==zoomed ? false:true; }).each(function (d) {
-      console.log(this);
-      if (d.children) return;
 
       var cell = d3.select(this); 
       var pies = d3.select(this).selectAll("g.pie").data(cell.data());
@@ -222,20 +266,34 @@ function collections( selection ) {
       // Update Pie charts
       pies.filter(function(d) { return d.data.name == zoomed ? false : true; }).transition()
         .duration(delay)
-  .call(updatePies);
+          .call(updatePies);
 
       var arcs = pies.selectAll("path")
         .data(function (d) { return pie(d.data.shards); });
 
       // Update unzoomed arcs
       arcs.filter(function(d) { return (d.data.collection == zoomed) ? false : true; })//.transition()
-//  .duration(delay)
-  .call(updateArcs);
-    });
+        //.duration(delay)
+        .call(updateArcs);
+      });
     
-    // Zooming
-    d3.selectAll("g.child.collection").on("click", zoom);
-  }
+      // Zooming
+      d3.selectAll("g.zoomable").on("click", zoom);
   
+      // Update Zoomed object
+      if (zoomed) {
+        var z = d3.select(".zoomed");
+        var id = z.data()[0].data.name.replace(/\./g,'');
+        var data = d3.select("#"+id).data();
+        z.data(data);
+  
+        z.select("g.pie")
+          .selectAll("path").data(function(d) { return pie(d.data.shards); }).enter().append("svg:path");
+  
+        z.select("g.pie")
+          .selectAll("path")
+  	  .call(zoomArcs);
+      }
+  }
   return chart;
 }
