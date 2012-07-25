@@ -16,8 +16,8 @@ define([
     } , 
 
     select: function( menuItem ){
-        $('.nav li').removeClass('active');
-        $('.' + menuItem).addClass('active');
+      $('.nav li').removeClass('active');
+      $('.' + menuItem).addClass('active');
     }
 
   });

@@ -26,6 +26,7 @@ define([
     } ,
     remove : function(){
       d3.select("#shards-svg").remove();
+      this.unbind();
     }
   });
 

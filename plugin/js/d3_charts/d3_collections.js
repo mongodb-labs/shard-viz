@@ -1,6 +1,7 @@
 function collections( selection ) {
 
-  var width = 1024,
+
+  var width = parseInt(selection.style("width")),
       height = 700,
       delay = 150, // transition delay in milliseconds
       cellColor = d3.scale.category20b(),
