@@ -1,10 +1,15 @@
 body {
-    padding:0;
+    padding-top:60px;
     border:0;
     min-height:500px;
     min-width:500px;
 }
 
+@media (max-width: 979px) {
+  body {
+    padding-top: 0px;
+  }
+ 
 .constrain {
 	margin:30px auto;
 	width:1030px;

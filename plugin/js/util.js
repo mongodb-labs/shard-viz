@@ -96,6 +96,17 @@ function formatShardsData(collections, shards, chunks) {
   return shards;
 }
 
+function genChunkKey( ns , min ){
+  return clean(JSON.stringify(ns)) + "|" + clean(JSON.stringify(min));
+}
+
+function guidGenerator() {
+  var S4 = function() {
+    return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+  };
+  return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+}
+
 /* Returns a value copy of the given object
  */
 function clone(source) {

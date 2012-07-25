@@ -12,6 +12,7 @@ function shardChart(selection) {
       delay = 500; // transition delay
 
   var board = selection.append("svg:svg")
+      .attr( "id" , "shards-svg" )
       .style("width", width)
       .style("height", height)
     .append("svg:g")
@@ -72,8 +73,8 @@ function shardChart(selection) {
       var curr = d3.select(g.childNodes[i]);
       var next = d3.select(g.childNodes[i+1]);
       if (g.childNodes[i].tagName == 'rect') {
-	  console.log(i); 
-	  console.log(g.childNodes[i].tagName);
+    console.log(i); 
+    console.log(g.childNodes[i].tagName);
         if (g.childNodes[i+1]) {
           if (+curr.attr("x") <= coor[0] && +next.attr("x") >= coor[0]) {
             return g.childNodes[i];
@@ -81,7 +82,7 @@ function shardChart(selection) {
         } else {
           if (+curr.attr("x") <= coor[0] && (width-pad) >= coor[0]) {
               return g.childNodes[i];
-  	  }
+      }
         }
       }
     }
@@ -104,17 +105,17 @@ function shardChart(selection) {
       .attr("class", "tooltip")
       .attr("id", function(d) { return "hello"; })
       .attr("title", function(d) { 
-	var rect = d3.select(this);
-	console.log(this.x);
-	console.log(rect);
-	var x = rect.attr("x");
-	var y = rect.attr("y");
+  var rect = d3.select(this);
+  console.log(this.x);
+  console.log(rect);
+  var x = rect.attr("x");
+  var y = rect.attr("y");
         selection.append("div")
-	  .attr("x", function() { return "100px"; })
-	  .style("top", function() { console.log(x); return x; })
-	  .style("left", x+"px")
-	  .style("opacity", "100")
-	  .text("hello")
+    .attr("x", function() { return "100px"; })
+    .style("top", function() { console.log(x); return x; })
+    .style("left", x+"px")
+    .style("opacity", "100")
+    .text("hello")
           .attr("class", "tooltip")
           .text("a simple tooltip")
       });
@@ -126,21 +127,21 @@ function shardChart(selection) {
     shards.enter()
       .append("svg:g").call(updateShards)
         .on("mouseover", function (d, i) {
-	    hover = getRect(d3.mouse(this), this); 
-	    d3.select(hover).attr("fill", "gray");
-	    console.log(hover);
-	    $(hover).tooltip('show');
-	})
+      hover = getRect(d3.mouse(this), this); 
+      d3.select(hover).attr("fill", "gray");
+      console.log(hover);
+      $(hover).tooltip('show');
+  })
         .on("mouseout", function(d, i) {
            var rect = getRect(d3.mouse(this), this);
-	   d3.select(rect).attr("fill", function(d) { return "white"; });
-	})
+     d3.select(rect).attr("fill", function(d) { return "white"; });
+  })
       .append("svg:text")
         .text(function(d) { return d._id; })
         .attr("x", function(d) { textHeight = this.getBBox().height; return textXPos(); })
         .attr("y", function(d, i) { return textYPos(i); })
-	.attr("font-family", "Helvetica Neue")
-	.attr("font-size", function(d) { console.log(this.getBBox()); return fontSize; })
+  .attr("font-family", "Helvetica Neue")
+  .attr("font-size", function(d) { console.log(this.getBBox()); return fontSize; })
         .style("color", "black");
 
     // Enter bars
@@ -151,17 +152,17 @@ function shardChart(selection) {
       .attr("class", "tooltip")
       .attr("id", function(d) { return "hello"; })
       .attr("title", function(d) { 
-	var rect = d3.select(this);
-	console.log(this.x);
-	console.log(rect);
-	var x = rect.attr("x");
-	var y = rect.attr("y");
+  var rect = d3.select(this);
+  console.log(this.x);
+  console.log(rect);
+  var x = rect.attr("x");
+  var y = rect.attr("y");
         selection.append("div")
-	  .attr("x", function() { return "100px"; })
-	  .style("top", function() { console.log(x); return x; })
-	  .style("left", x+"px")
-	  .style("opacity", "100")
-	  .text("hello")
+    .attr("x", function() { return "100px"; })
+    .style("top", function() { console.log(x); return x; })
+    .style("left", x+"px")
+    .style("opacity", "100")
+    .text("hello")
           .attr("class", "tooltip")
           .text("a simple tooltip")
       });

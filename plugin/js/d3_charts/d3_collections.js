@@ -30,6 +30,7 @@ function collections( selection ) {
     .value(function(d) { return d.chunks.length; });
   
   var board = selection.append("svg:svg")
+      .attr("id" , "collections-svg")
       .style("width", width)
       .style("height", height)
     .append("svg:g")
@@ -42,6 +43,44 @@ function collections( selection ) {
     this.parentNode.appendChild(this); 
     }); 
   }; 
+
+  function formatCollectionsData( collections , shards , chunks ){
+    var data = {};
+    data.name = "root";
+    data.children = [];
+    
+    // Count chunks and shards for each collection
+    for (var i in collections) {
+      if (collections[i].dropped) continue; //skip dropped collections
+       
+        var child = {};
+        child.name = collections[i]._id;
+        child.shards = [];
+        child.size = 0;
+        
+        // Count chunks
+        for (var j in chunks) {
+          if (child.name == chunks[j].ns) {
+            child.size++;
+      }
+  }
+  
+  // Group a collection's shards and chunks
+    for (var k in shards) {
+      shards[k].chunks = [];
+      for (var l in chunks) {
+        if (shards[k]._id == chunks[l].shard && chunks[l].ns == child.name) {
+          shards[k].chunks.push(chunks[l]);
+          }
+        }
+        if (shards[k].chunks.length > 0) {
+          child.shards.push(new clone(shards[k]));
+          }
+        }
+        data.children.push(child);
+      }
+    return data;
+  }
 
   /* Given the output of treemap(formatData()), return a list of shards to be used 
    * for graphing pie charts. Modifies data.data.shards to add dx and dy of parent cell
@@ -156,6 +195,7 @@ function collections( selection ) {
   function zoom(d) {
     // Unzoom
     if ( zoomed && d3.select(this).attr("class").search("zoomed") != -1) {
+      console.log("UNZOOM")
       zoomed = null;
       var z = d3.select(".zoomed");
       z.select("rect.cell")
@@ -201,6 +241,8 @@ function collections( selection ) {
 	  .call(placeArcs)
         .transition().duration(delay)
 	  .call(zoomArcs);
+
+    d3.selectAll("g.zoomable").on("click", zoom);
     }
   }
 
@@ -211,6 +253,9 @@ function collections( selection ) {
   }
 
   function chart( data ) {
+
+    var data = formatCollectionsData( data.collections , data.shards , data.chunks );
+
     var cells = board.data([data]).selectAll("g.collection")
       .data(treemap);
 
