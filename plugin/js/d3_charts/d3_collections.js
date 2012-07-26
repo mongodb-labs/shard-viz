@@ -1,11 +1,10 @@
 function collections( selection ) {
-
-
-  var width = parseInt(selection.style("width")),
+  var width = 1024,
       height = 700,
       delay = 150, // transition delay in milliseconds
       cellColor = d3.scale.category20b(),
       pieColor = d3.scale.category10();
+      pieScale = 0.02, // percent of smallest dimension of cell that pie will space for
       zoomed = null; // g id of zoomed cell
      
 
@@ -16,22 +15,21 @@ function collections( selection ) {
     .value(function(d) { return d.size; });
 
   var zoomedArc = d3.svg.arc()
-    .innerRadius(function() { return Math.ceil((Math.min(height, width)/2) - 20); })
+    .innerRadius(function() { return Math.ceil((Math.min(height, width)/2) - (pieScale * Math.min(height, width))); })
     .outerRadius(function() { var innerRadius = 
-                               ((Math.min(height, width)/2) - 20);
+                               ((Math.min(height, width)/2) - (pieScale * Math.min(height, width)));
                                return Math.ceil(innerRadius - (innerRadius/2.5)); });
 
   var arc = d3.svg.arc()
-    .innerRadius(function(d) { return Math.ceil((Math.min(d.data.dy, d.data.dx)/2) - 20); })
+    .innerRadius(function(d) { return Math.ceil((Math.min(d.data.dy, d.data.dx)/2) - (pieScale * Math.min(height, width))); })
     .outerRadius(function(d) { var innerRadius = 
-                               ((Math.min(d.data.dy, d.data.dx)/2) - 20);
+                               ((Math.min(d.data.dy, d.data.dx)/2) - (0.02 * Math.min(height, width)));
                                return Math.ceil(innerRadius - (innerRadius/2.5)); });
   
   var pie = d3.layout.pie().sort(null)
     .value(function(d) { return d.chunks.length; });
   
   var board = selection.append("svg:svg")
-      .attr("id" , "collections-svg")
       .style("width", width)
       .style("height", height)
     .append("svg:g")
@@ -121,7 +119,7 @@ function collections( selection ) {
   function updateCells(d) {
     //Update the rects contained in the g elements
     this.select("rect")
-      .style("fill", function(d) { return d.children ? null : cellColor(d.data.name); })
+      .style("fill", function(d) { return d.children ? "white" : cellColor(d.data.name); })
       .attr("x", function(d) { return d.x + "px"; })
       .attr("y", function(d) { return d.y + "px"; })
       .attr("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
@@ -196,7 +194,6 @@ function collections( selection ) {
   function zoom(d) {
     // Unzoom
     if ( zoomed && d3.select(this).attr("class").search("zoomed") != -1) {
-      console.log("UNZOOM")
       zoomed = null;
       var z = d3.select(".zoomed");
       z.select("rect.cell")
@@ -243,7 +240,6 @@ function collections( selection ) {
         .transition().duration(delay)
 	  .call(zoomArcs);
 
-    d3.selectAll("g.zoomable").on("click", zoom);
     }
   }
 
@@ -254,9 +250,7 @@ function collections( selection ) {
   }
 
   function chart( data ) {
-
-    var data = formatCollectionsData( data.collections , data.shards , data.chunks );
-
+      console.log(data);
     var cells = board.data([data]).selectAll("g.collection")
       .data(treemap);
 
@@ -341,5 +335,25 @@ function collections( selection ) {
   	  .call(zoomArcs);
       }
   }
+
+  // Returns data formatted for two legends: shards and collections as an object.
+  chart.legend = function(data) {
+    var result = {"shards": [], "collections" : []};
+    var colls = _.pluck(data.children, "name")
+    var collColors = _.map(colls, cellColor);
+    console.log(colls)
+    console.log(collColors)
+    var shards = []; 
+    _.each(data.children, function(child) { 
+      shards.push(_.pluck(child.shards, "_id"));
+    });
+    shards = _.uniq(_.flatten(shards));
+    var shardColors = _.map(shards, pieColor);
+    result.collections = _.map(_.zip(colls, collColors), function (i) { return {name: i[0], color: i[1]}; });
+    result.shards = _.map(_.zip(shards, shardColors), function (i) { return {name: i[0], color: i[1]}; }); 
+    console.log(result)
+    return result;
+  }
+
   return chart;
 }
