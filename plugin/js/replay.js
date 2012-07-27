@@ -20,7 +20,6 @@ define([
       return clean(JSON.stringify(ns)) + "|" + clean(JSON.stringify(min));
     }
 
-
     function rewind( collections , shards , chunks , changeLogData , databases , startIdx , endIdx ){
       var shardMap = {};
       var collMap = {};
@@ -68,6 +67,8 @@ define([
           // shardMap[shardId] = shardId;
           // shardId = data[idx].details.from;
           // shardMap[shardId] = shardId;
+          if(typeof chunks[genChunkKey(data[idx].ns , data[idx].details.min)] == "undefined" )
+            console.log(data[idx]);
           chunks[ genChunkKey( data[idx].ns , data[idx].details.min ) ].shard = data[idx].details.from;
         }
         break;
@@ -88,6 +89,7 @@ define([
       }
 
       collections = updateCollections( changeLogData , collections , startIdx , endIdx );
+      shards = updateShards( changeLogData , shards , startIdx , endIdx );
       var data = { collections : collections , shards : shards , chunks : chunks };
 
       return data;
@@ -181,8 +183,7 @@ define([
 
 
       collections = _.uniq(_.union( _.values(collMap) , collections ) , false , function(item){ return item._id });
-      //collections = updateCollections( changeLogData , collections , startIdx , endIdx );
-      //console.log("FAST" , collections)
+      shards = _.uniq( _.union( _.values(shardMap) , shards ) , false , function(item){ return item._id });
       var data = { collections : collections , shards : shards , chunks : chunks };
 
       return data;
@@ -254,6 +255,25 @@ define([
         }
       });
       return finalCollections;
+    }
+
+    function updateShards( changeLog , shards , startIdx , endIdx ){
+      var finalShards = [];
+      _.each(shards , function(shard){
+        for(var i = 0; i < changeLog.length ; i++){
+          var entry = changeLog[i];
+          if(entry.what == "moveChunk.commit"){
+            if( entry.details.from == shard._id || entry.details.to == shard._id){
+              if(i < startIdx){
+                finalShards.push(shard);
+                break;
+              }
+            }
+          }          
+        }
+      });
+
+      return finalShards;
     }
 
     // Public methods

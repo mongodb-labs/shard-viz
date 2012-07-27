@@ -181,6 +181,7 @@ define([
                                       time.curTime );
 
       if( replayData ){
+        console.log(replayData.collections);
         this.attributes.chunks = replayData.chunks;
         this.attributes.collections = replayData.collections;
         this.attributes.shards = replayData.shards;
