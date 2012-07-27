@@ -1,5 +1,4 @@
-function shardChart(selection) {
-  var width = 1024,
+function shardChart(selection) {  var width = 1024,
       height = 700,
       space = 100, // spacing between each stack
       barColor = d3.scale.category20c(), 
@@ -12,7 +11,6 @@ function shardChart(selection) {
       delay = 500; // transition delay
 
   var board = selection.append("svg:svg")
-      .attr( "id" , "shards-svg" )
       .style("width", width)
       .style("height", height)
     .append("svg:g")
@@ -73,8 +71,8 @@ function shardChart(selection) {
       var curr = d3.select(g.childNodes[i]);
       var next = d3.select(g.childNodes[i+1]);
       if (g.childNodes[i].tagName == 'rect') {
-    console.log(i); 
-    console.log(g.childNodes[i].tagName);
+	  console.log(i); 
+	  console.log(g.childNodes[i].tagName);
         if (g.childNodes[i+1]) {
           if (+curr.attr("x") <= coor[0] && +next.attr("x") >= coor[0]) {
             return g.childNodes[i];
@@ -82,7 +80,7 @@ function shardChart(selection) {
         } else {
           if (+curr.attr("x") <= coor[0] && (width-pad) >= coor[0]) {
               return g.childNodes[i];
-      }
+  	  }
         }
       }
     }
@@ -105,64 +103,66 @@ function shardChart(selection) {
       .attr("class", "tooltip")
       .attr("id", function(d) { return "hello"; })
       .attr("title", function(d) { 
-  var rect = d3.select(this);
-  console.log(this.x);
-  console.log(rect);
-  var x = rect.attr("x");
-  var y = rect.attr("y");
+	var rect = d3.select(this);
+	console.log(this.x);
+	console.log(rect);
+	var x = rect.attr("x");
+	var y = rect.attr("y");
         selection.append("div")
-    .attr("x", function() { return "100px"; })
-    .style("top", function() { console.log(x); return x; })
-    .style("left", x+"px")
-    .style("opacity", "100")
-    .text("hello")
+	  .attr("x", function() { return "100px"; })
+	  .style("top", function() { console.log(x); return x; })
+	  .style("left", x+"px")
+	  .style("opacity", "100")
+	  .text("hello")
           .attr("class", "tooltip")
           .text("a simple tooltip")
       });
   }
 
   function chart(data) {
+      console.log(data); 
     // Enter shards
     var shards = board.selectAll("g.shard").data(data);
     shards.enter()
       .append("svg:g").call(updateShards)
         .on("mouseover", function (d, i) {
-      hover = getRect(d3.mouse(this), this); 
-      d3.select(hover).attr("fill", "gray");
-      console.log(hover);
-      $(hover).tooltip('show');
-  })
+	    hover = getRect(d3.mouse(this), this); 
+	    d3.select(hover).attr("fill", "gray");
+	    console.log(hover);
+	    $(hover).tooltip('show');
+	})
         .on("mouseout", function(d, i) {
            var rect = getRect(d3.mouse(this), this);
-     d3.select(rect).attr("fill", function(d) { return "white"; });
-  })
+	   d3.select(rect).attr("fill", function(d) { return "white"; });
+	})
       .append("svg:text")
         .text(function(d) { return d._id; })
         .attr("x", function(d) { textHeight = this.getBBox().height; return textXPos(); })
         .attr("y", function(d, i) { return textYPos(i); })
-  .attr("font-family", "Helvetica Neue")
-  .attr("font-size", function(d) { console.log(this.getBBox()); return fontSize; })
+	.attr("font-family", "Helvetica Neue")
+	.attr("font-size", function(d) { console.log(this.getBBox()); return fontSize; })
         .style("color", "black");
 
     // Enter bars
-    var bars = shards.selectAll("rect.collection").data(function(d, i) { return d.collections; });
+    var bars = shards.selectAll("rect.collection").data(function(d) { return _.values(d.collections); });
+
     var barEnter = bars.enter().append("svg:rect");
     barEnter
       .attr("title", function(d) { return "hello"; })
-      .attr("class", "tooltip")
+      .attr("class", "tooltip collection")
       .attr("id", function(d) { return "hello"; })
       .attr("title", function(d) { 
-  var rect = d3.select(this);
-  console.log(this.x);
-  console.log(rect);
-  var x = rect.attr("x");
-  var y = rect.attr("y");
+	var rect = d3.select(this);
+	console.log(this.x);
+	console.log(rect);
+	var x = rect.attr("x");
+	var y = rect.attr("y");
         selection.append("div")
-    .attr("x", function() { return "100px"; })
-    .style("top", function() { console.log(x); return x; })
-    .style("left", x+"px")
-    .style("opacity", "100")
-    .text("hello")
+	  .attr("x", function() { return "100px"; })
+	  .style("top", function() { console.log(x); return x; })
+	  .style("left", x+"px")
+	  .style("opacity", "100")
+	  .text("hello")
           .attr("class", "tooltip")
           .text("a simple tooltip")
       });
@@ -179,6 +179,13 @@ function shardChart(selection) {
 
     // Exit shards
     shards.exit().remove();
+  }
+
+  // formats the given data for a legend view to graph
+  chart.legend = function(data) {
+    var colls = _.keys(_.groupBy(_.flatten(_.pluck(data, "collections"), true), "name"));
+    var colors = _.map(colls, barColor);
+    return _.map(_.zip(colls, colors), function(i) { return {name: i[0], color: i[1]}; });
   }
 
   return chart;
