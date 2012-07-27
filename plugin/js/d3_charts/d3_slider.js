@@ -7,9 +7,9 @@ define([
 
   var TimeSlider = function( selection , eventAgg ){
 
-    var brushSel , brushRect;
+    var axisHistory = [] , extentHistory = [] , cursorHistory = [];
 
-    var axisHistory = [] , extentHistory = [];
+    var prevCursorTime;
 
     var margin = {top: 10, right: 10, bottom: 10, left: 15},
         margin2 = {top: 10, right: 10, bottom: 20, left: 15},
@@ -28,7 +28,9 @@ define([
         .on("brush", brush);
     
     var drag = d3.behavior.drag()
-      .on("drag", dragmove);
+      .on("dragstart" , setPrevCursorTime)
+      .on("drag", dragmove )
+      .on("dragend", replay );
 
     var area = d3.svg.area()
         .interpolate("monotone")
@@ -36,6 +38,10 @@ define([
         .y0(height2);
 
     var svg = selection.append("svg")
+        .attr("id" , "slider-svg")
+        //.attr("width" , "100%")
+        //.attr("height" , height + margin.top + margin.bottom)
+        //.attr("viewBox" , "0 0 " + (width + margin.left + margin.right) + " " + (height + margin.top + margin.bottom) );
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom);
 
@@ -54,19 +60,27 @@ define([
         .attr("transform", "translate(0," + height2 + ")")
         .call(xAxis);
 
+    var brushSel = d3.select(".x.brush");
+    var brushRect = brushSel.select(".background");
+
     context.append("rect")
         .attr("id" , "cursor")
         .attr("fill" , "deepskyblue")
         .attr("width" , "10")
         .attr("height" , height2 )
-        .attr("x" , "0")
+        .call(cursorSnapToRight)
         .call(drag);
 
-    brushSel = d3.select(".x.brush");
-    brushRect = brushSel.select(".background");
+    function cursorSnapToRight( rect ){
+      var rect = this;
+      var rw = parseInt(rect.attr("width"));
+      var bw = parseInt(brushRect.attr("width"));
+      this.attr("x" , (bw - rw + 1) + "");
+      return this;
+    }
 
     function chart(data){
-      var data = _.map( data , function(item){ return new Date(item.time.$date); });
+      var data = _.map( data , function(item){ return item.time.$date; });
       updateSlider( d3.extent(data.map(function(d) { return d; })) );
     }
 
@@ -76,7 +90,7 @@ define([
     function updateSlider( extent ){
       x.domain(extent);
       context.select(".x.axis").transition().call(xAxis);
-      d3.select(".brush").call(brush.clear());
+      //d3.select(".brush").call(brush.clear());
     }
 
     function dragmove(d){
@@ -95,12 +109,40 @@ define([
       extentHistory.push(brush.extent());
       updateSlider(brush.extent());
       d3.select(".brush").call(brush.clear());
+      d3.select("#cursor").call(cursorSnapToRight);
     }
 
     function brushZoomOut(){
       if( axisHistory.length == 0 ) return;
       updateSlider(axisHistory.pop());
       if( extentHistory.length != 0) d3.select(".brush").call( brush.extent(extentHistory.pop()));
+      d3.select("#cursor").call(cursorSnapToRight);
+    }
+
+    function setPrevCursorTime(){
+      var cursor = d3.select("#cursor");
+      var curLocation = parseInt(cursor.attr("x")) + parseInt(cursor.attr("width"));
+      var width = parseInt(brushRect.attr("width"));
+      var domain = x.domain();
+      var leftBound = domain[0].valueOf();
+      var rightBound = domain[1].valueOf();
+
+      var curTime = Math.floor(curLocation  * (rightBound - leftBound) / width + leftBound);
+      prevCursorTime = curTime;
+    }
+
+    function replay(){
+      var cursor = d3.select("#cursor");
+      //console.log(prevCursorTime);
+      var curLocation = parseInt(cursor.attr("x")) + parseInt(cursor.attr("width"));
+      var width = parseInt(brushRect.attr("width"));
+      var domain = x.domain();
+      var leftBound = domain[0].valueOf();
+      var rightBound = domain[1].valueOf();
+
+      var curTime = Math.floor(curLocation * (rightBound - leftBound) / width + leftBound);
+      eventAgg.trigger("timeslider:move" , { curTime : curTime , prevTime : prevCursorTime });
+      eventAgg.trigger("timeslider:stop_fetch");
     }
 
     return chart;

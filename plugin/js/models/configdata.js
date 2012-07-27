@@ -5,98 +5,47 @@ define([
   "underscore",
   "backbone",
   "async",
-  "util"
-], function( $ , _ , Backbone , async ) {
+  "replay",
+  "util",
+], function( $ , _ , Backbone , async , Replay ) {
   var ConfigData = Backbone.Model.extend({
     defaults: {
       chunks : {},
-      shards : {},
-      collections : {},
+      shards : [],
+      collections : [],
       changeLog : []
     },
-    initialize : function(){
-      this.fetchDefaults();
+    initialize : function(options){
+      this.eventAgg = options.eventAgg;
+      this.eventAgg.bind("timeslider:move" , this.replay , this);
+      this.eventAgg.bind("timeslider:stop_fetch" , this.stopFetch , this );
+      this.eventAgg.bind("resume_fetch" , this.resumeFetch , this );
+      this.fetch();
     } ,
-    // parse : function(response){
-    //   //console.log("PARSING")
-    //   var attrs = {};
-    //   attrs.changeLog = response.rows;
-    //   // console.log(this.attributes.changeLog);
-    //   // console.log(attrs.changeLog.length);
-    //   // if( //typeof attrs.changeLog[this.prevChangeLogLen] == "undefined" || 
-    //   //     this.attributes.changeLog[this.prevChangeLogLen - 1]._id != attrs.changeLog[this.prevChangeLogLen - 1]._id){
-    //   //   this.fetchDefaults();
-    //   // } else 
-    //   if(this.prevChangeLogLen < attrs.changeLog.length){
-    //     this.updateAttributes( attrs.changeLog.slice( this.prevChangeLogLen , attrs.changeLog.length ) );
-    //     this.prevChangeLogLen = this.attributes.changeLog.length;
-    //     return attrs;
-    //   }
-    // },
-    // fetch : function(){
-    //   console.log("FETCHING");
-    //   this.attributes.prevChangeLogLen = this.attributes.changelog.length;
-    //   var url = this.url + "/config/changelog/?limit=0";
-    //   return Backbone.Collection.prototype.fetch(this, {url : url});
-    // },
-    fetchDefaults : function(){
-      var self = this;
-      var urls = { chunks : this.url + "/config/chunks/?limit=0",
-                   shards : this.url + "/config/shards/" ,
-                   collections : this.url + "/config/collections/" ,
-                   changeLog : this.url + "/config/changelog/?limit=0" };
+    parse : function(response){
 
-      var syncSuccess = function( attr , response , cb ){ 
-        this[attr] = response.rows;
-        cb();
-      }
+      if( response.changeLog.length != this.attributes.changeLog.length ||
+          response.chunks.length != _.values(this.attributes.chunks).length ||
+          response.shards.length != this.attributes.shards.length ||
+          response.collections.length != this.attributes.collections.length ){
 
-      var syncError = function( cb ){
-        cb();
-      }
+        var chunkMap = {};
 
-      var iter = function( item , cb ){ 
-        Backbone.sync( "read" , 
-                       self , 
-                       { url : urls[item] , 
-                         success : function(response){ self.attributes[item] = response.rows; cb(); } ,
-                         error : function(){ cb(); } } ) }; 
+        _.each( response.chunks , function(chunk){
+          chunkMap[ genChunkKey( chunk.ns , chunk.min ) ] = chunk;
+        });
 
-      async.forEach( _.keys(urls) , iter , function(err){ 
-        if(!err){
+        response.chunks = chunkMap;
 
-          var chunkMap = {} ,
-              shardMap = {}
-              collectionsMap = {};
-          
-          _.each( self.attributes.chunks , function(chunk){
-            chunkMap[ genChunkKey( chunk.ns , chunk.min ) ] = chunk;
-          });
-          self.attributes.chunks = chunkMap;
-          
-          _.each( self.attributes.shards , function(shard){
-            shardMap[shard._id] = shard;
-          });
-          self.attributes.shards = shardMap;
+        return response;
+      } else return;
 
-          _.each( self.attributes.collections , function(collection){
-            collectionsMap[collection._id] = collection;
-          })
-          self.attributes.collections = collectionsMap;
-          
-          self.prevChangeLogLen = self.attributes.changeLog.length;
-          console.log(self.prevChangeLogLen);
-          self.initLoad = true;
-          if(!self.timerId){
-            self.timerId = setInterval( function(){ self.fetch({url : self.url + "/config/changelog/?limit=0" }); } , 500 , this);
-          }
-          self.trigger( "loaded" );
-        } 
-      }); 
-    } ,
-
+    },
     fetch : function(){
       var self = this;
+
+      var response = {};
+
       var urls = { chunks : this.url + "/config/chunks/?limit=0",
                    shards : this.url + "/config/shards/" ,
                    collections : this.url + "/config/collections/" ,
@@ -115,108 +64,128 @@ define([
         Backbone.sync( "read" , 
                        self , 
                        { url : urls[item] , 
-                         success : function(response){ self.attributes[item] = response.rows; cb(); } ,
+                         success : function(resp){ response[item] = resp.rows; cb(); } ,
                          error : function(){ cb(); } } ) }; 
 
       async.forEach( _.keys(urls) , iter , function(err){ 
-        if(!err){
+        if(!err){ 
 
-          var chunkMap = {} ,
-              shardMap = {}
-              collectionsMap = {};
-          
-          _.each( self.attributes.chunks , function(chunk){
-            chunkMap[ genChunkKey( chunk.ns , chunk.min ) ] = chunk;
-          });
-          self.attributes.chunks = chunkMap;
-          
-          _.each( self.attributes.shards , function(shard){
-            shardMap[shard._id] = shard;
-          });
-          self.attributes.shards = shardMap;
+          var parsedResponse = self.parse(response);
 
-          _.each( self.attributes.collections , function(collection){
-            collectionsMap[collection._id] = collection;
-          })
-          self.attributes.collections = collectionsMap;
-
-          self.trigger( "change" );
+          if(!self.fetchTimerId){
+            self.attributes = parsedResponse;
+            self.trigger( "configdata:loaded" );
+            self.initLoad = true;
+            self.fetchTimerId = setInterval( function(){ self.fetch({url : self.url + "/config/changelog/?limit=0" }); } , 500 , self);
+          } else if( parsedResponse ){
+            self.attributes = parsedResponse;
+            self.trigger( "configdata:fetch" );
+          }
         } 
       }); 
     } ,
-    updateAttributes : function( changeLogDelta ){
-      var self = this;
-      _.each( changeLogDelta , function( entry ){
-        if( typeof self.attributes.collections[entry.ns] == "undefined" ){
-          self.attributes.collections[entry.ns] = { _id : entry.ns , 
-                                                    dropped : 
-                                                    false , 
-                                                    lastmod : entry.time };
-        }
-        switch( entry.what ){
-          case "split" : {
-            var oldChunk = self.attributes.chunks[ genChunkKey( entry.ns , entry.details.before.min ) ];
-            if( typeof oldChunk == "undefined" ){
-              console.log(entry);
-              var chunk = { _id : entry.ns + "_id" + guidGenerator() ,
-                            lastmod : entry.details.before.lastmod ,
-                            ns : entry.ns ,
-                            min : entry.details.before.min ,
-                            max : entry.details.before.max };
+    // updateAttributes : function( changeLogDelta ){
+    //   var self = this;
+    //   _.each( changeLogDelta , function( entry ){
+    //     if( typeof self.attributes.collections[entry.ns] == "undefined" ){
+    //       self.attributes.collections[entry.ns] = { _id : entry.ns , 
+    //                                                 dropped : 
+    //                                                 false , 
+    //                                                 lastmod : entry.time };
+    //     }
+    //     switch( entry.what ){
+    //       case "split" : {
+    //         var oldChunk = self.attributes.chunks[ genChunkKey( entry.ns , entry.details.before.min ) ];
+    //         if( typeof oldChunk == "undefined" ){
+    //           console.log(entry);
+    //           var chunk = { _id : entry.ns + "_id" + guidGenerator() ,
+    //                         lastmod : entry.details.before.lastmod ,
+    //                         ns : entry.ns ,
+    //                         min : entry.details.before.min ,
+    //                         max : entry.details.before.max };
 
-              self.attributes.chunks[ genChunkKey( entry.ns , entry.details.before.min ) ] = chunk;
-              oldChunk = chunk;
-            }
-            var shard = oldChunk.shard;
-            // Remove old chunk
-            delete oldChunk;
-            // Generate new chunks
-            var leftChunk = { _id : entry.ns + "-_id_" + guidGenerator() , 
-                              lastmod : entry.details.left.lastmod , 
-                              ns : entry.ns , 
-                              min : entry.details.left.min ,
-                              max : entry.details.left.max , 
-                              shard : shard
-                            };
-            var rightChunk = { _id : entry.ns + "-_id_" + guidGenerator() ,
-                               lastmod : entry.details.right.lastmod , 
-                               ns : entry.ns , 
-                               min : entry.details.right.min ,
-                               max : entry.details.right.max ,
-                               shard : shard
-                             };
+    //           self.attributes.chunks[ genChunkKey( entry.ns , entry.details.before.min ) ] = chunk;
+    //           oldChunk = chunk;
+    //         }
+    //         var shard = oldChunk.shard;
+    //         // Remove old chunk
+    //         delete oldChunk;
+    //         // Generate new chunks
+    //         var leftChunk = { _id : entry.ns + "-_id_" + guidGenerator() , 
+    //                           lastmod : entry.details.left.lastmod , 
+    //                           ns : entry.ns , 
+    //                           min : entry.details.left.min ,
+    //                           max : entry.details.left.max , 
+    //                           shard : shard
+    //                         };
+    //         var rightChunk = { _id : entry.ns + "-_id_" + guidGenerator() ,
+    //                            lastmod : entry.details.right.lastmod , 
+    //                            ns : entry.ns , 
+    //                            min : entry.details.right.min ,
+    //                            max : entry.details.right.max ,
+    //                            shard : shard
+    //                          };
 
-            self.attributes.chunks[ genChunkKey( entry.ns , leftChunk.min )] = leftChunk;
-            self.attributes.chunks[ genChunkKey( entry.ns , rightChunk.min )] = rightChunk;
-          }
-          break;
-          case "moveChunk.commit" : {
+    //         self.attributes.chunks[ genChunkKey( entry.ns , leftChunk.min )] = leftChunk;
+    //         self.attributes.chunks[ genChunkKey( entry.ns , rightChunk.min )] = rightChunk;
+    //       }
+    //       break;
+    //       case "moveChunk.commit" : {
 
-            if( typeof self.attributes.shards[ entry.details.to ] == "undefined" )
-              self.attributes.shards[ entry.details.to ] = { _id : entry.details.to };
-            if( typeof self.attributes.shards[ entry.details.from ] == "undefined" )
-              self.attributes.shards[ entry.details.from ] = { _id : entry.details.from };
+    //         if( typeof self.attributes.shards[ entry.details.to ] == "undefined" )
+    //           self.attributes.shards[ entry.details.to ] = { _id : entry.details.to };
+    //         if( typeof self.attributes.shards[ entry.details.from ] == "undefined" )
+    //           self.attributes.shards[ entry.details.from ] = { _id : entry.details.from };
 
-            self.attributes.chunks[ genChunkKey( entry.ns , entry.details.min )].shard = entry.details.to;
-          }
-          break;
-          case "dropCollection" : {
-            self.attributes.collections[entry.ns].dropped = true;
-            //Todo : Remove chunks of dropped collection?
-          }
-          break;
-          case "dropDatabase" : {
+    //         self.attributes.chunks[ genChunkKey( entry.ns , entry.details.min )].shard = entry.details.to;
+    //       }
+    //       break;
+    //       case "dropCollection" : {
+    //         self.attributes.collections[entry.ns].dropped = true;
+    //         //Todo : Remove chunks of dropped collection?
+    //       }
+    //       break;
+    //       case "dropDatabase" : {
 
-          }
-        }
-      });
-    } ,
+    //       }
+    //     }
+    //   });
+    // } ,
     toJSON : function(){
       var attrs = {};
       attrs.chunks = _.values(this.attributes.chunks);
-      attrs.shards = _.values(this.attributes.shards);
-      attrs.collections = _.values(this.attributes.collections);
+      attrs.shards = this.attributes.shards; //_.values(this.attributes.shards);
+      attrs.collections = this.attributes.collections; //_.values(this.attributes.collections);
       return attrs;
+    },
+    replay : function(time){
+      console.log("REPLAY")
+      console.log(this.attributes.chunks);  
+      var replayData = Replay.replay( this.attributes.collections , 
+                     this.attributes.shards , 
+                     this.attributes.chunks , 
+                     this.attributes.changeLog , 
+                     time.prevTime , 
+                     time.curTime );
+
+      if( replayData ){
+        this.attributes.chunks = replayData.chunks;
+        this.attributes.collections = replayData.collections;
+        this.attributes.shards = replayData.shards;
+        this.trigger("configdata:replay");
+      }
+
+    },
+    stopFetch : function(){
+      if(this.fetchTimerId){
+        clearInterval(this.fetchTimerId);
+        this.fetchTimerId = 0;
+      }
+    } ,
+    resumeFetch : function(){
+      if(!this.fetchTimerId){
+        this.fetchTimerId = setInterval( function(){ self.fetch({url : self.url + "/config/changelog/?limit=0" }); } , 500 , self);
+      }
     },
     url : "http://127.0.0.1:5004",
     initLoad : false

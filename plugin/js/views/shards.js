@@ -14,10 +14,13 @@ define([
   var ShardsView = Backbone.View.extend({
     initialize : function(options){
       this.eventAgg = options.eventAgg;
-      this.eventAgg.bind( "clean" , this.remove , this);
-      this.model.bind( "change" , this.render , this ); // listen for configdata model updates
-      this.model.bind( "loaded" , this.render , this);
-      $(this.el).addClass( "span8 offset2" );
+      this.eventAgg.bind( "router:clean" , this.remove , this);
+      this.model.bind( "configdata:replay" , this.render , this );
+      this.model.bind( "configdata:fetch" , this.render, this);
+      this.model.bind( "configdata:loaded" , this.render , this);
+      $("#leftMargin").addClass("span2");
+      $("#rightMargin").addClass("span2");
+      $(this.el).addClass("span8");
       this.d3ShardChart = shardChart(d3.select(this.el));  
     } ,
     render : function(){
@@ -27,6 +30,10 @@ define([
     remove : function(){
       d3.select("#shards-svg").remove();
       this.unbind();
+      $("#slider").remove();
+      $("#leftMargin").removeClass("span2");
+      $("#rightMargin").removeClass("span2");
+      $(this.el).removeClass("span8");
     }
   });
 

@@ -12,14 +12,20 @@ define([
 
     initialize : function(options){
       this.eventAgg = options.eventAgg;
-      this.slider = TimeSlider(d3.select(this.el) , this.eventAgg );
-      this.model.bind( "change" , this.render , this ); // listen for configdata model updates
-      this.model.bind( "loaded" , this.render , this);
+      this.eventAgg.bind( "clean" , this.destroy , this );
+      this.slider = TimeSlider( d3.select(this.el) , this.eventAgg );
+      //this.model.bind( "configdata:replay" , this.render , this );
+      this.model.bind( "configdata:fetch" , this.render, this);
+      this.model.bind( "configdata:loaded" , this.render , this);
       this.render();
       return this;
     } , 
     render : function(){
       this.slider(this.model.get("changeLog"));
+    } , 
+    destroy : function(){
+      d3.select("#slider-svg").remove();
+      this.unbind();
     }
   });
 

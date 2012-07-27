@@ -14,7 +14,7 @@ define([
     initialize : function(){
       $(this.el).html(this.template());
       $("#loadingModal").modal({ keyboard : false , backdrop : "static" });
-      this.model.bind( "loaded" , this.closeModal , this );
+      this.model.bind( "configdata:loaded" , this.closeModal , this );
       return this;
     } ,
     closeModal : function(){
