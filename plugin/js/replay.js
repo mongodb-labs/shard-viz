@@ -34,8 +34,6 @@ define([
           var leftData =  chunks[ genChunkKey( data[idx].ns , data[idx].details.left.min ) ];
               rightData = chunks[ genChunkKey( data[idx].ns , data[idx].details.right.min ) ];
 
-          console.log("SPLIT" , data[idx] , leftData , rightData );
-
           if( typeof leftData != "undefined" && typeof rightData != "undefined" ){
 
             var _id = leftData.ns + "-_id_" + guidGenerator() ,

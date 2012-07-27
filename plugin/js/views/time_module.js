@@ -1,36 +1,33 @@
-// timeslider.js
+// time_module.js
 
 define([
   "jquery",
-  "underscore",
-  "backbone",
-  "d3",
-  "d3_charts/d3_slider"
-], function( $ , _ , Backbone , d3 , TimeSlider){
+  "underscore"
+] , function( $ , _ ){
 
-  var TimesliderView = Backbone.View.extend({
+  var TimeModuleView = Backbone.View.extend({
 
     initialize : function(options){
       this.eventAgg = options.eventAgg;
       this.eventAgg.bind( "router:clean" , this.destroy , this );
-      $(this.el).append("<i id='in' class='icon-plus-sign'></i><i id='out' class='icon-minus-sign'></i>");
-      this.slider = TimeSlider( d3.select(this.el) , this.eventAgg );
-      //this.model.bind( "configdata:replay" , this.render , this );
+      console.log(this.legend);
       this.model.bind( "configdata:fetch" , this.render, this);
       this.model.bind( "configdata:loaded" , this.render , this);
+      this.model.bind( "condigdata:replay" , this.render, this);
       return this;
-    } ,
+    } , 
     render : function(){
-      this.slider(this.model.get("changeLog"));
+      $(this.el).append("TIME");
     } , 
     destroy : function(){
-      d3.select("#slider-svg").remove();
+      //d3.select("#legend-svg").remove();
       this.eventAgg.unbind("router:clean" , this.destroy);
       this.model.unbind( "configdata:fetch" , this.render );
       this.model.unbind( "configdata:loaded" , this.render );
+      this.model.unbind( "configdata:render" , this.render );
     }
   });
 
-  return TimesliderView;  
+  return TimeModuleView;
 
 });

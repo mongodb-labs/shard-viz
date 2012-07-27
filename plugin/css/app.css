@@ -1,5 +1,6 @@
 body {
-    padding-top:60px;
+    background-color: #ECD898;
+    padding-top:120px;
     border:0;
     min-height:500px;
     min-width:500px;
@@ -11,51 +12,51 @@ body {
   }
  
 .constrain {
-	margin:30px auto;
-	width:1030px;
-	height:700px;
+  margin:30px auto;
+  width:1030px;
+  height:700px;
 }
 
 #container {
-	top : -10px;
-	position : relative;
+  top : -10px;
+  position : relative;
 }
 
 
 #drawboard {
-	position : absolute;
-	display: block;
+  position : absolute;
+  display: block;
 }
 
 #player {
-	position : absolute;
-	width : 100%;
-	bottom : 10px;
-	top: 100%;
-	margin : 0px auto;
+  position : absolute;
+  width : 100%;
+  bottom : 10px;
+  top: 100%;
+  margin : 0px auto;
 }
 
 #slider {
-	position : absolute ;
-	left : 90px;
-	bottom : -25px;
-	width: 80%;
+  position : absolute ;
+  left : 90px;
+  bottom : -25px;
+  width: 80%;
 
     /*margin: 0px auto;*/
 }
 
 h1.title {
-	font-family: "Helvetica Neue", Helvetica;
-	font-size: 45px;
-	color: grey;
-	margin: 30px;
+  font-family: "Helvetica Neue", Helvetica;
+  font-size: 45px;
+  color: grey;
+  margin: 30px;
 }
 
 }
 #play {
-	position : absolute;
-	left : 20px;
-	bottom : 0px;
+  position : absolute;
+  left : 20px;
+  bottom : 0px;
 }
 
 svg {
@@ -76,4 +77,43 @@ cursor path {
   stroke: #fff;
   fill-opacity: .125;
   shape-rendering: crispEdges;
+}
+
+div.navbar-inner {
+  background-image: url("/img/back-header.png");
+}
+
+li.active a {
+  background-color: #4E3629;
+}
+
+a {
+  color: #AA814D;
+}
+
+.navbar .nav > li > a {
+  padding: 39px 15px 39px;
+  font-size: 18px;
+}
+
+a.brand.navlink {
+  padding-top: 16px;
+}
+
+span.title.brand {
+  font-weight: bold;
+  font-family: Helvetica, Arial, sans-serif;
+  color: #FFFDFF;
+  position: relative;
+  font-size: 35px;
+  margin-top: 25px;
+  margin-right: 20px;
+}
+
+.navbar .nav .active a {
+  background-color: rgba(78,54,41,.5);
+}
+
+.navbar .nav .active > a:hover {
+  background-color: rgba(78,54,41,1);
 }

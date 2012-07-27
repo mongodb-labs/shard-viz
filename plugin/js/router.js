@@ -41,7 +41,9 @@ define([
                                                    model : this.configData , 
                                                    eventAgg : this.eventAgg , 
                                                    parent : true , 
-                                                   slider : true });
+                                                   slider : true ,
+                                                   legend : true ,
+                                                   time_module : true });
       if(this.configData.initLoad){
         this.collectionsView.render();
       }
@@ -53,7 +55,9 @@ define([
                                          model : this.configData , 
                                          eventAgg : this.eventAgg , 
                                          parent : true , 
-                                         slider : true });
+                                         slider : true ,
+                                         legend : true ,
+                                         time_module : true });
       if(this.configData.initLoad){
         this.shardsView.render();
       }
