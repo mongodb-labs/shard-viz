@@ -12,7 +12,7 @@ define([
 
     initialize : function(options){
       this.eventAgg = options.eventAgg;
-      this.eventAgg.bind( "clean" , this.destroy , this );
+      this.eventAgg.bind( "router:clean" , this.destroy , this );
       this.slider = TimeSlider( d3.select(this.el) , this.eventAgg );
       //this.model.bind( "configdata:replay" , this.render , this );
       this.model.bind( "configdata:fetch" , this.render, this);
@@ -25,7 +25,9 @@ define([
     } , 
     destroy : function(){
       d3.select("#slider-svg").remove();
-      this.unbind();
+      this.eventAgg.unbind("router:clean" , this.destroy);
+      this.model.unbind( "configdata:fetch" , this.render );
+      this.model.unbind( "configdata:loaded" , this.render );
     }
   });
 

@@ -25,15 +25,23 @@ define([
       this.headerView = new HeaderView({ el : $(".header") });
       this.loadingView = new LoadingView({ el : $("#content") , model : this.configData });
     },
-
     dashboard : function(){
       this.eventAgg.trigger("router:clean");
-      this.dashboardView = new DashboardView({ el : $("#content") , model : this.configData , eventAgg : this.eventAgg });
+      this.dashboardView = new DashboardView({ el : $("#content") , 
+                                               model : this.configData , 
+                                               eventAgg : this.eventAgg });
+      if( this.configData.initLoad){
+        this.dashboardView.render();
+      }
       this.headerView.select("dashboard-menu");
     },
     collections : function(){
       this.eventAgg.trigger("router:clean");
-      this.collectionsView = new CollectionsView({ el : $("#content") , model : this.configData , eventAgg : this.eventAgg });
+      this.collectionsView = new CollectionsView({ el : $("#content") , 
+                                                   model : this.configData , 
+                                                   eventAgg : this.eventAgg , 
+                                                   parent : true , 
+                                                   slider : true });
       if(this.configData.initLoad){
         this.collectionsView.render();
       }
@@ -41,7 +49,11 @@ define([
     },
     shards : function(){
       this.eventAgg.trigger("router:clean");
-      this.shardsView = new ShardsView({ el : $("#content") , model : this.configData , eventAgg : this.eventAgg })
+      this.shardsView = new ShardsView({ el : $("#content") , 
+                                         model : this.configData , 
+                                         eventAgg : this.eventAgg , 
+                                         parent : true , 
+                                         slider : true });
       if(this.configData.initLoad){
         this.shardsView.render();
       }
