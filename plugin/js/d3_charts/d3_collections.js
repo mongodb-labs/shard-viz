@@ -12,6 +12,10 @@ define([
         cellColor = d3.scale.category20b(),
         pieColor = d3.scale.category10();
         pieScale = 0.02, // percent of smallest dimension of cell that pie will space for
+        fontSize = 18,
+        zoomedFontSize = 24, 
+        pad = 5, // padding inside each cell collection (for titles)
+        zoomedPad = 9,
         zoomed = null; // g id of zoomed cell
 
     var treemap = d3.layout.treemap()
@@ -190,6 +194,24 @@ define([
         .attr("d", function(d) { return arc(d); });
     }
 
+  function placeText() {
+    this
+      .text(function(d) { return (d.children) ? "" : d.data.name; })
+      .attr("x", function(d) { return d.x + pad + "px"; })
+      .attr("y", function(d) { return d.y + fontSize + "px"; })
+      .attr("text-anchor", "left")
+      .style("font-size", fontSize)
+      .style("font-family", "Helvetica Neue, Helvetica, sans-serif");
+  }
+
+  function zoomText() {
+    this
+      .text(function(d) { return (d.children) ? "" : d.data.name; })
+      .attr("x", function() { return zoomedPad + "px"; })
+      .attr("y", function() { return zoomedFontSize + "px"; })
+      .style("font-size", zoomedFontSize);
+  }
+
     function zoomArcs() {
       this
         .attr("transform", function () { return "translate(" + width / 2 + ", " + height / 2 +")"; })
@@ -206,6 +228,10 @@ define([
         z.select("rect.cell")
           .transition().duration(delay)
       .call(placeCell);
+
+      z.select("text.ns")
+        .transition().duration(delay)
+          .call(placeText);
 
         z.select("g.pie").selectAll("path")
           .transition().duration(delay)
@@ -231,6 +257,14 @@ define([
       .call(placeCell)
           .transition().duration(delay)
       .call(zoomCell);
+
+      // create the text and animate zooming
+      z
+        .append("svg:text")
+          .attr("class", "ns")
+          .call(placeText)
+        .transition().duration(delay)
+          .call(zoomText)
 
         // create the pie chart and animate zooming
         z
@@ -353,8 +387,6 @@ define([
       var result = {"shards": [], "collections" : []};
       var colls = _.pluck(data.children, "name")
       var collColors = _.map(colls, cellColor);
-      console.log(colls)
-      console.log(collColors)
       var shards = []; 
       _.each(data.children, function(child) { 
         shards.push(_.pluck(child.shards, "_id"));
@@ -363,7 +395,7 @@ define([
       var shardColors = _.map(shards, pieColor);
       result.collections = _.map(_.zip(colls, collColors), function (i) { return {name: i[0], color: i[1]}; });
       result.shards = _.map(_.zip(shards, shardColors), function (i) { return {name: i[0], color: i[1]}; }); 
-      console.log(result)
+      // console.log(result)
       return result;
     }
 

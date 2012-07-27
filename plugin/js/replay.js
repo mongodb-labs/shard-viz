@@ -21,7 +21,7 @@ define([
     }
 
 
-    function rewind( collections , shards , chunks , changeLogData , startIdx , endIdx ){
+    function rewind( collections , shards , chunks , changeLogData , databases , startIdx , endIdx ){
       var shardMap = {};
       var collMap = {};
       var data = changeLogData;
@@ -58,14 +58,12 @@ define([
     
             //Insert pre-split chunk into chunk map.
             chunks[ genChunkKey( data[idx].ns , leftData.min ) ] = origData;
-            console.log(chunks[genChunkKey( data[idx].ns , leftData.min )], "HERE");
+            // console.log(chunks[genChunkKey( data[idx].ns , leftData.min )], "HERE");
           }
 
         }
         break;
         case "moveChunk.commit" : { 
-                  console.log("MOVECHUNK");
-          console.log(data[idx]);
           // var shardId = chunks[genChunkKey( data[idx].ns , data[idx].details.min )].shard;
           // shardMap[shardId] = shardId;
           // shardId = data[idx].details.from;
@@ -89,12 +87,13 @@ define([
         idx--;
       }
 
+      collections = updateCollections( changeLogData , collections , startIdx , endIdx );
       var data = { collections : collections , shards : shards , chunks : chunks };
 
       return data;
     }
 
-    function fastForward( collections , shards , chunks , changeLogData , startIdx , endIdx ){
+    function fastForward( collections , shards , chunks , changeLogData , databases , startIdx , endIdx ){
       var collMap = {};
       var shardMap = {};
       var data = changeLogData;
@@ -106,12 +105,21 @@ define([
           var oldChunk = chunks[ genChunkKey( data[idx].ns , data[idx].details.before.min ) ];
 
           if( typeof oldChunk == "undefined"){
+
+            var shard;
+
+            _.each(databases , function(db){
+              if( db._id == data[idx].ns.split(".")[0] ){
+                shard = db.primary;
+              }
+            })
+
             var chunk = { _id : data[idx].ns + "-_id_" + guidGenerator() , 
                           lastmod : data[idx].details.before.lastmod ,
                           ns : data[idx].ns ,
                           min : data[idx].details.before.min , 
                           max : data[idx].details.before.max ,
-                          shard : data[idx].details.before.shard //undefined!
+                          shard : shard
                         };
             chunks[genChunkKey( data[idx].ns , data[idx].details.before.min )] = oldChunk = chunk;
           }
@@ -136,7 +144,7 @@ define([
           // Insert post-split chunks into chunk map.
           chunks[ genChunkKey( leftChunk.ns , leftChunk.min ) ] = leftChunk;
           chunks[ genChunkKey( rightChunk.ns , rightChunk.min ) ] = rightChunk;
-          console.log("---> Split.");
+          // console.log("---> Split.");
         }
         break;
         case "moveChunk.commit" : {  
@@ -156,11 +164,11 @@ define([
         }
         break;
         case "dropCollection" : { 
-          for( var i in collections ){
-            if( collections[i]._id == data[idx].ns ){
-              collections[i]._id.dropped = true;
-            }
-          }
+          // for( var i in collections ){
+          //   if( collections[i]._id == data[idx].ns ){
+          //     collections[i]._id.dropped = true;
+          //   }
+          // }
           // console.log("---> Dropped collection detected.");
         }
         break;
@@ -171,12 +179,16 @@ define([
         idx++;
       }
 
+
+      collections = _.uniq(_.union( _.values(collMap) , collections ) , false , function(item){ return item._id });
+      //collections = updateCollections( changeLogData , collections , startIdx , endIdx );
+      //console.log("FAST" , collections)
       var data = { collections : collections , shards : shards , chunks : chunks };
 
       return data;
     }
 
-    function replay( collections , shards , chunks , changeLog , startDate , destDate ){
+    function replay( collections , shards , chunks , changeLog , databases , startDate , destDate ){
 
       var collections = _.map(collections , function(coll){ return new clone(coll); })
       var shards = _.map(shards , function(shard){ return new clone(shard); });
@@ -184,7 +196,6 @@ define([
       _.each(chunks , function(chunk){chunkMap[genChunkKey( chunk.ns , chunk.min )] = new clone(chunk); })
       var chunks = chunkMap;
 
-      console.log(collections , shards , chunks);
 
       var timestamps = _.map(changeLog , function(entry){ return entry.time.$date; });
       //console.log(timestamps,startDate,destDate);
@@ -208,22 +219,41 @@ define([
         else endIdx ++;
       }
 
-      startIdx = timestamps.length-1;
-
       // Check if timestamps exist in the changelog.
       if( typeof startIdx == -1 ){
-        console.log("The configAt timestamp is not in the changelog.");
+        //console.log("The configAt timestamp is not in the changelog.");
         return;
       }
       if( typeof endIdx == -1 ){
-        console.log("The destDate timestamp is not in the changelog.");
+        //console.log("The destDate timestamp is not in the changelog.");
         return;
       }
 
       var direction = endIdx - startIdx > 0 ? "forward" : "rewind" ; 
-      if(direction == "forward") return fastForward( collections , shards , chunks , changeLog , startIdx , endIdx );
-      if(direction == "rewind")  return rewind( collections, shards , chunks , changeLog , startIdx , endIdx ); 
+      if(direction == "forward") return fastForward( collections , shards , chunks , changeLog , databases , startIdx , endIdx );
+      if(direction == "rewind")  return rewind( collections, shards , chunks , changeLog , databases , startIdx , endIdx ); 
 
+    }
+
+    function updateCollections( changeLog , collections , startIdx , endIdx ){
+      var direction = endIdx - startIdx > 0 ? "forward" : "rewind" ; 
+      var nsArr = _.pluck( changeLog , "ns" );
+      var finalCollections = [];
+      _.each(collections , function(coll){
+        if(direction == "rewind" ){
+          var initCollIdx = _.indexOf( nsArr , coll._id );
+          if( initCollIdx != -1 && initCollIdx < startIdx){
+            finalCollections.push(coll);
+          }
+        } else {
+          var initCollIdx = _.indexOf( nsArr , coll._id );
+          console.log(initCollIdx);
+          if( initCollIdx != -1 && initCollIdx < endIdx){
+            finalCollections.push(coll);
+          }
+        }
+      });
+      return finalCollections;
     }
 
     // Public methods

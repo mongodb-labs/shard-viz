@@ -13,7 +13,8 @@ define([
       chunks : {},
       shards : [],
       collections : [],
-      changeLog : []
+      changeLog : [],
+      databases : {}
     },
     initialize : function(options){
       this.eventAgg = options.eventAgg;
@@ -30,12 +31,16 @@ define([
           response.collections.length != this.attributes.collections.length ){
 
         var chunkMap = {};
-
         _.each( response.chunks , function(chunk){
           chunkMap[ genChunkKey( chunk.ns , chunk.min ) ] = chunk;
         });
-
         response.chunks = chunkMap;
+
+        var dbMap = {};
+        _.each( response.databases , function(db){
+          dbMap[db._id] = db;
+        })
+        response.databases = dbMap;
 
         return response;
       } else return;
@@ -49,7 +54,8 @@ define([
       var urls = { chunks : this.url + "/config/chunks/?limit=0",
                    shards : this.url + "/config/shards/" ,
                    collections : this.url + "/config/collections/" ,
-                   changeLog : this.url + "/config/changelog/?limit=0" };
+                   changeLog : this.url + "/config/changelog/?limit=0" ,
+                   databases : this.url + "/config/databases/" };
 
       var syncSuccess = function( attr , response , cb ){ 
         this[attr] = response.rows;
@@ -69,6 +75,13 @@ define([
 
       async.forEach( _.keys(urls) , iter , function(err){ 
         if(!err){ 
+
+          _.each(response , function(respItem){
+            // console.log(respItem);
+            if( typeof respItem == "undefined" ){
+              return;
+            }
+          });
 
           var parsedResponse = self.parse(response);
 
@@ -159,14 +172,13 @@ define([
       return attrs;
     },
     replay : function(time){
-      console.log("REPLAY")
-      console.log(this.attributes.chunks);  
       var replayData = Replay.replay( this.attributes.collections , 
-                     this.attributes.shards , 
-                     this.attributes.chunks , 
-                     this.attributes.changeLog , 
-                     time.prevTime , 
-                     time.curTime );
+                                      this.attributes.shards , 
+                                      this.attributes.chunks , 
+                                      this.attributes.changeLog , 
+                                      this.attributes.databases ,
+                                      time.prevTime , 
+                                      time.curTime );
 
       if( replayData ){
         this.attributes.chunks = replayData.chunks;

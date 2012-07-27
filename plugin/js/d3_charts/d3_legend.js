@@ -37,8 +37,6 @@ define([
         .attr("class", "key")
         .style("word-wrap", "break-word")
 
-      console.log(keyEnter);
-
       keyEnter.append("div")
         .attr("class", "color")
         .style("margin-right", "5px")

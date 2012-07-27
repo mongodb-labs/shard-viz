@@ -10,7 +10,7 @@ define([
     initialize : function(options){
       this.eventAgg = options.eventAgg;
       this.eventAgg.bind( "router:clean" , this.destroy , this );
-      console.log(this.legend);
+      //console.log(this.legend);
       this.model.bind( "configdata:fetch" , this.render, this);
       this.model.bind( "configdata:loaded" , this.render , this);
       this.model.bind( "condigdata:replay" , this.render, this);
