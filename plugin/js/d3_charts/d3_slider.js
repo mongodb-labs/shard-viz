@@ -76,6 +76,7 @@ define([
       var rw = parseInt(rect.attr("width"));
       var bw = parseInt(brushRect.attr("width"));
       this.attr("x" , (bw - rw + 1) + "");
+      setPrevCursorTime();
       return this;
     }
 

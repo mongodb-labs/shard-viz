@@ -44,6 +44,9 @@ define([
       }
       if(options.time_module){
         this.timeModuleView = new TimeModuleView({ el : $("leftMargin") , model : this.model , eventAgg : options.eventAgg });
+        if(this.model.initLoad){
+          this.timeModuleView.render();
+        }
       }
     } ,
     render : function(){
