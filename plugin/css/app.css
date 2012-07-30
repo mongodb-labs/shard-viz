@@ -117,3 +117,12 @@ span.title.brand {
 .navbar .nav .active > a:hover {
   background-color: rgba(78,54,41,1);
 }
+
+div.modal-header {
+  background-color: #ECD898;
+  border-bottom-color: #4E3629;
+}
+
+div.modal-body {
+  background-color: #ECD898;
+}
