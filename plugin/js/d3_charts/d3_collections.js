@@ -16,7 +16,20 @@ define([
         zoomedFontSize = 24, 
         pad = 5, // padding inside each cell collection (for titles)
         zoomedPad = 9,
+	prevData = null
         zoomed = null; // g id of zoomed cell
+
+    // When window resizes, resize chart
+    d3.select(window).on('resize', function() {
+      width = parseInt(selection.style("width"));
+      selection.select("svg").style("width", width);
+      treemap = d3.layout.treemap()
+        .size([width, height])
+        .sticky(false)
+        .children(function(d) { return d.children; })
+        .value(function(d) { return d.size; });
+      chart(prevData);
+    });
 
     var treemap = d3.layout.treemap()
       .size([width, height])
@@ -293,7 +306,7 @@ define([
     }
 
     function chart( data ) {
-      
+      prevData = data;
       var data = formatCollectionsData( data.collections , data.shards , data.chunks );
 
       var cells = board.data([data]).selectAll("g.collection")
@@ -378,6 +391,7 @@ define([
           z.select("g.pie")
             .selectAll("path")
         .call(zoomArcs);
+
         }
     }
 
@@ -398,6 +412,11 @@ define([
       // console.log(result)
       return result;
     }
+    
+    // Remove event listeners
+    chart.destroy = function() {
+      d3.select(window).on('resize', null);
+    };
 
     return chart;
   }
