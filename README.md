@@ -1,5 +1,17 @@
-#Shard Visualization
+#MongoDB Sharding Visualizer#
 
-A visualization of chunk splits and migrations using d3.js inside a Google Chrome plugin.
+This is an extension for Google Chrome that allows interactive monitoring of a MongoDB sharded cluster. Additionally it has the capability of displaying previous states of a sharded cluster.
 
+##Dependencies##
+* Google Chrome
 
+##Installation##
+1. Download and unpack the zip ball.
+2. In Google Chrome, go to Preferences > Extensions and click "Load unpacked extension...". When prompted, select the plugin folder.
+3. In your sharded cluster, ensure that your config server(s) is running with the MongoDB REST interface. For more information, refer to the official MongoDB documentation [here](http://www.mongodb.org/display/DOCS/Http+Interface/).
+
+##Built With##
+Backbone.js , d3.js , Require.js , Twitter Bootstrap
+
+##License##
+Apache License, Version 2.0
