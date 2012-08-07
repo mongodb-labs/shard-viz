@@ -8,10 +8,10 @@ define([
 
   var HeaderView = Backbone.View.extend({
 
-    template : _.template($("#header-tmpl").html()) ,
+    template : $("#header-tmpl").html() ,
 
     initialize : function(){
-      $(this.el).html(this.template());
+      $(this.el).html(this.template);
       return this;
     } , 
 

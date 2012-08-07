@@ -9,7 +9,6 @@ define([
   "views/legend",
   "views/time_module",
   "d3_collections",
-  "jqueryui",
   "util"
 ], function( $ , _ , Backbone , d3 , TimesliderView , LegendView , TimeModuleView , CollectionsChart ){
 
@@ -50,7 +49,13 @@ define([
       }
     } ,
     render : function(){
+      var modelData = this.model.toJSON();
       this.d3CollChart( this.model.toJSON() );
+      if( this.collLegendView && this.shardLegendView ){
+        var data = this.d3CollChart.legend( modelData );
+        this.collLegendView.legend(data.collections);;
+        this.shardLegendView.legend(data.shards);
+      }
       return this;
     } ,
     destroy : function(){

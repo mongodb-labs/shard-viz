@@ -7,7 +7,6 @@
     <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css" />
     <link rel="stylesheet" type="text/css" href="/css/bootstrap-responsive.min.css" />
     <link rel="stylesheet" type="text/css" href="/css/app.css" />
-    <link rel="stylesheet" type="text/css" href ="/css/ui-lightness/jquery-ui-1.8.21.custom.css" />
     <script data-main="js/main" src="js/libs/require/require.js"></script>
   </head>
   <body>
@@ -37,24 +36,66 @@
                         <li class="collections-menu"><a href="#collections">Collections</a></li>
                         <li class="shards-menu"><a href="#shards">Shards</a></li>
                   </ul>
+                  <div class="pull-right">
+                      <button id="settings"><i class="icon-cog"></i>Settings</button>
+                  </div>
                 </div>
             </div>
         </div>
     </script>
 
-
-    <script type="text/template" id="loading-tmpl">
-        <div class="modal hide" id="loadingModal">
+    <script type="text/template" id="welcome-tmpl">
+        <div class="modal hide" id="welcomeModal">
           <div class="modal-header">
             <h3>Welcome to the MongoDB Sharding Visualizer</h3>
           </div>
           <div class="modal-body">
-            <p>Loading cluster data...</p>
+            <p>Please enter the following information from a config server in your cluster:</p>
+              <form id="initialSettings">
+                <fieldset>
+                  <div class="control-group">
+                    http:
+                    <input id="welcomeHost" type="text" class="input-small" placeholder="Host">
+                    <input id="welcomePort" type="text" class="input-small" placeholder="Port">
+                    <button id="welcomeApplySettings" class="btn">Apply</button>
+                  </div>
+                </fieldset>
+              </form>
+          </div>
+        </div>
+    </script>
+
+    <script type="text/template" id="loading-tmpl">
+        <div class="modal hide" id="loadingModal">
+          <div class="modal-header">
+            <h3>Loading cluster data...</h3>
+          </div>
+          <div class="modal-body">
             <div class="progress progress-striped
                  active">
               <div class="bar"
                    style="width: 100%;"></div>
             </div>
+          </div>
+        </div>
+    </script>
+
+    <script type="text/template" id="settings-tmpl">
+        <div class="modal hide" id="settingsModal">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times</button>
+            <h3>Settings</h3>
+          </div>
+          <div class="modal-body">
+            <fieldset>
+              <div class="control-group">
+                <!-- http:// -->
+                <input id="settingsHost" type="text" class="input-small" placeholder="Host">
+                <input id="settingsPort" type="text" class="input-small" placeholder="Port">
+                <button id="applySettings" class="btn">Apply</button>
+                <button id="cancelSettings" class="btn">Cancel</button>
+              </div>
+            </fieldset>
           </div>
         </div>
     </script>

@@ -17,8 +17,6 @@ define([
         height = 100 - margin.top - margin.bottom;
         height2 = 100 - margin2.top - margin2.bottom;
 
-   //var formatDate = d3.time.format("%b %Y");
-
     var x = d3.time.scale().range([0, width]);
 
     var xAxis = d3.svg.axis().scale(x).orient("bottom");
@@ -39,9 +37,6 @@ define([
 
     var svg = selection.append("svg")
         .attr("id" , "slider-svg")
-        //.attr("width" , "100%")
-        //.attr("height" , height + margin.top + margin.bottom)
-        //.attr("viewBox" , "0 0 " + (width + margin.left + margin.right) + " " + (height + margin.top + margin.bottom) );
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom);
 
@@ -122,7 +117,7 @@ define([
 
     function setPrevCursorTime(){
       var cursor = d3.select("#cursor");
-      var curLocation = parseInt(cursor.attr("x")) + parseInt(cursor.attr("width"));
+      var curLocation = parseInt(cursor.attr("x"));
       var width = parseInt(brushRect.attr("width"));
       var domain = x.domain();
       var leftBound = domain[0].valueOf();
@@ -134,8 +129,7 @@ define([
 
     function replay(){
       var cursor = d3.select("#cursor");
-      //console.log(prevCursorTime);
-      var curLocation = parseInt(cursor.attr("x")) + parseInt(cursor.attr("width"));
+      var curLocation = parseInt(cursor.attr("x"));
       var width = parseInt(brushRect.attr("width"));
       var domain = x.domain();
       var leftBound = domain[0].valueOf();

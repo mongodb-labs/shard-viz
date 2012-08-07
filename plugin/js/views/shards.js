@@ -29,7 +29,9 @@ define([
       this.d3ShardChart = ShardChart(d3.select(this.el));
       if(options.slider){
         $(this.el).append("<div id=slider></div>");
-        this.sliderView = new TimesliderView({ el : $("#slider") , model : this.model , eventAgg : options.eventAgg });
+        this.sliderView = new TimesliderView({ el : $("#slider") , 
+                                               model : this.model , 
+                                               eventAgg : options.eventAgg });
         if(this.model.initLoad){
           this.sliderView.render();
         }
@@ -37,11 +39,20 @@ define([
       if(options.legend){
         $("#rightMargin").append("<div id=shards-legend></div>");
         $("#shards-legend").append("<h2>" + "Collections" + "</h2>").css("font-family" , "Helvetica Neue, Helvetica, sans-serif");
-        this.shardLegendView = new LegendView({ el : $("#shards-legend") , model : this.model , eventAgg : options.eventAgg , chart : this.d3ShardChart , mode : "shards" });
+        this.shardLegendView = new LegendView({ el : $("#shards-legend") , 
+                                                model : this.model , 
+                                                eventAgg : options.eventAgg , 
+                                                chart : this.d3ShardChart , 
+                                                mode : "shards" });
       }
     } ,
     render : function(){
-      this.d3ShardChart( this.model.toJSON() );
+      var modelData = this.model.toJSON();
+      this.d3ShardChart( modelData );
+      if(this.shardLegendView){
+        var data = this.d3ShardChart.legend(modelData);
+        this.shardLegendView.legend(data);
+      }
       return this;
     } ,
     destroy : function(){

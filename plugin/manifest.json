@@ -1,11 +1,12 @@
-{ 
+{   
+    "manifest_version" : 2 ,
     "name": "MongoDB Sharding Visualization",
     "version": "1.0",
     "description": "A visualization for MongoDB sharding migrations and splits.",
     "app": {
-	"launch": {
-	    "local_path": "index.html"
-	}
+	    "launch": {
+	      "local_path": "index.html"
+	    }
     },
     "permissions": [ "unlimitedStorage", "http://*/" ]
 }

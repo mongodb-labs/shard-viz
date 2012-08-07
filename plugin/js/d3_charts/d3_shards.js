@@ -161,8 +161,7 @@ define([
     }
 
     function chart(data) {
-      var data = formatShardsData(data.collections , data.shards , data.chunks );
-        console.log("FORMATTED" , data); 
+      var data = formatShardsData(data.collections , data.shards , data.chunks ); 
       // Enter shards
       var shards = board.selectAll("g.shard").data(data);
       shards.enter()
@@ -173,7 +172,7 @@ define([
           .attr("x", function(d) { textHeight = this.getBBox().height; return textXPos(); })
           .attr("y", function(d, i) { return textYPos(i); })
     .attr("font-family", "Helvetica Neue")
-    .attr("font-size", function(d) { console.log(this.getBBox()); return fontSize; })
+    .attr("font-size", function(d) { return fontSize; })
           .style("color", "black");
 
       // Enter bars

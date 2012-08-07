@@ -106,7 +106,7 @@ span.title.brand {
   color: #FFFDFF;
   position: relative;
   font-size: 35px;
-  margin-top: 25px;
+  margin-top: 27px;
   margin-right: 20px;
 }
 
@@ -116,4 +116,29 @@ span.title.brand {
 
 .navbar .nav .active > a:hover {
   background-color: rgba(78,54,41,1);
+}
+
+div.modal-header {
+  background-color: #ECD898;
+  border-bottom-color: #4E3629;
+}
+
+div.modal-body {
+  background-color: #ECD898;
+}
+
+input#settingsHost {
+  margin-bottom:0;
+}
+
+input#settingsPort {
+  margin-bottom:0;
+}
+
+input#welcomeHost {
+  margin-bottom:0;
+}
+
+input#welcomePort {
+  margin-bottom:0;
 }

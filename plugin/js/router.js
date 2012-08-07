@@ -5,12 +5,15 @@ define([
   "underscore",
   "backbone",
   "models/configdata",
+  "views/welcome",
   "views/header",
   "views/loading",
   "views/dashboard",
   "views/collections",
-  "views/shards"
-], function( $ , _ , Backbone , ConfigData , HeaderView , LoadingView , DashboardView , CollectionsView , ShardsView ){
+  "views/shards",
+  "views/settings",
+  "util"
+], function( $ , _ , Backbone , ConfigData , WelcomeView, HeaderView , LoadingView , DashboardView , CollectionsView , ShardsView , SettingsView ){
   
   var AppRouter = Backbone.Router.extend({
     routes: {
@@ -21,11 +24,21 @@ define([
     },
     initialize : function(){
       this.eventAgg = _.extend({} , Backbone.Events); // Global event aggregator
+      this.eventAgg.bind("welcome:update" , this.loadDefaults , this);
+
       this.configData = new ConfigData({ eventAgg : this.eventAgg }); // Data model
-      this.headerView = new HeaderView({ el : $(".header") });
-      this.loadingView = new LoadingView({ el : $("#content") , model : this.configData });
+
+      if(!getPersistedItem("configUrl")){
+        this.welcomeView = new WelcomeView({ el : $("#content") , eventAgg : this.eventAgg });
+      } else {
+        this.loadDefaults();
+      }
+
     },
     dashboard : function(){
+      if(!this.configured){
+        return;
+      }
       this.eventAgg.trigger("router:clean");
       this.dashboardView = new DashboardView({ el : $("#content") , 
                                                model : this.configData , 
@@ -62,6 +75,18 @@ define([
         this.shardsView.render();
       }
       this.headerView.select("shards-menu");
+    } ,
+    loadDefaults : function(){
+      this.configured = true;
+      this.headerView = new HeaderView({ el : $(".header") });
+      this.settingsView = new SettingsView({ el : $("body") , 
+                                             content : $("#content") , 
+                                             eventAgg : this.eventAgg });
+      if( !this.configData.initLoad ){
+        this.loadingView = new LoadingView({ el : $("#content") , 
+                                             model : this.configData });
+      }
+      this.dashboard();
     }
   });
 

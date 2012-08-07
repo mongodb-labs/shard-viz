@@ -33,40 +33,41 @@ define([
           var leftData =  chunks[ genChunkKey( data[idx].ns , data[idx].details.left.min ) ];
               rightData = chunks[ genChunkKey( data[idx].ns , data[idx].details.right.min ) ];
 
-          if( typeof leftData != "undefined" && typeof rightData != "undefined" ){
+          var _id = leftData.ns + "-_id_" + guidGenerator() ,
+              lastmod = { t : data[idx].details.before.lastmod.t , 
+                          i : data[idx].details.before.lastmod.i } ,
+              ns = data[idx].ns ,
+              min = leftData.min ,
+              max = rightData.max ,  
+              shard = leftData.shard;
+  
+          var origData = { _id : _id , 
+                           lastmod : lastmod , 
+                           ns : ns , 
+                           min : min , 
+                           max : max , 
+                           shard : shard };
+    
+          //Remove post-split chunks from chunk map.
+          delete chunks[ genChunkKey( data[idx].ns , data[idx].details.left.min ) ];
+          delete chunks[ genChunkKey( data[idx].ns , data[idx].details.right.min ) ];
+  
+          if( clean(JSON.stringify(origData.min)) == '{"_id":{"$minKey":1}}' &&
+              clean(JSON.stringify(origData.max)) == '{"_id":{"$maxKey":1}}' ){
+            if(typeof collMap[data[idx].ns] != "undefined" ){
+              delete collMap[data[idx].ns];
+            }
 
-            var _id = leftData.ns + "-_id_" + guidGenerator() ,
-                lastmod = { t : data[idx].details.before.lastmod.t , 
-                            i : data[idx].details.before.lastmod.i } ,
-                ns = data[idx].ns ,
-                min = leftData.min ,
-                max = rightData.max ,  
-                shard = leftData.shard;
-    
-            var origData = { _id : _id , 
-                             lastmod : lastmod , 
-                             ns : ns , 
-                             min : min , 
-                             max : max , 
-                             shard : shard };
-    
-    
-            //Remove post-split chunks from chunk map.
-            delete chunks[ genChunkKey( data[idx].ns , data[idx].details.left.min ) ];
-            delete chunks[ genChunkKey( data[idx].ns , data[idx].details.right.min ) ];
-    
-            //Insert pre-split chunk into chunk map.
-            chunks[ genChunkKey( data[idx].ns , leftData.min ) ] = origData;
-            // console.log(chunks[genChunkKey( data[idx].ns , leftData.min )], "HERE");
+            idx--;
+            continue; // If this is the initial chunk for the collection, don't insert back into chunks
           }
+
+          //Insert pre-split chunk into chunk map.
+          chunks[ genChunkKey( data[idx].ns , leftData.min ) ] = origData;
 
         }
         break;
         case "moveChunk.commit" : { 
-          // var shardId = chunks[genChunkKey( data[idx].ns , data[idx].details.min )].shard;
-          // shardMap[shardId] = shardId;
-          // shardId = data[idx].details.from;
-          // shardMap[shardId] = shardId;
           if(typeof chunks[genChunkKey(data[idx].ns , data[idx].details.min)] == "undefined" )
             console.log(data[idx]);
           chunks[ genChunkKey( data[idx].ns , data[idx].details.min ) ].shard = data[idx].details.from;
@@ -89,7 +90,8 @@ define([
       }
 
       collections = updateCollections( changeLogData , collections , startIdx , endIdx );
-      shards = updateShards( changeLogData , shards , startIdx , endIdx );
+      updateChunks( changeLogData , chunks , collections , startIdx , endIdx );
+
       var data = { collections : collections , shards : shards , chunks : chunks };
 
       return data;
@@ -107,7 +109,6 @@ define([
           var oldChunk = chunks[ genChunkKey( data[idx].ns , data[idx].details.before.min ) ];
 
           if( typeof oldChunk == "undefined"){
-
             var shard;
 
             _.each(databases , function(db){
@@ -166,11 +167,6 @@ define([
         }
         break;
         case "dropCollection" : { 
-          // for( var i in collections ){
-          //   if( collections[i]._id == data[idx].ns ){
-          //     collections[i]._id.dropped = true;
-          //   }
-          // }
           // console.log("---> Dropped collection detected.");
         }
         break;
@@ -199,7 +195,6 @@ define([
 
 
       var timestamps = _.map(changeLog , function(entry){ return entry.time.$date; });
-      //console.log(timestamps,startDate,destDate);
       var startIdx = _.sortedIndex(timestamps , startDate );
       var endIdx = _.sortedIndex(timestamps , destDate );
 
@@ -221,12 +216,16 @@ define([
       }
 
       // Check if timestamps exist in the changelog.
-      if( typeof startIdx == -1 ){
+      if( typeof startIdx == "undefined" ){
         //console.log("The configAt timestamp is not in the changelog.");
         return;
       }
-      if( typeof endIdx == -1 ){
+      if( typeof endIdx == "undefined" ){
         //console.log("The destDate timestamp is not in the changelog.");
+        return;
+      }
+
+      if ( startIdx == endIdx ){
         return;
       }
 
@@ -243,7 +242,7 @@ define([
       _.each(collections , function(coll){
         if(direction == "rewind" ){
           var initCollIdx = _.indexOf( nsArr , coll._id );
-          if( initCollIdx != -1 && initCollIdx < startIdx){
+          if( initCollIdx != -1 && initCollIdx <= endIdx){
             finalCollections.push(coll);
           }
         } else {
@@ -257,14 +256,14 @@ define([
       return finalCollections;
     }
 
-    function updateShards( changeLog , shards , startIdx , endIdx ){
+    function updateShards( changeLog , shards , startIdx , endIdx ){ // Not fully accurate. Relies on changelog migration entry
       var finalShards = [];
       _.each(shards , function(shard){
         for(var i = 0; i < changeLog.length ; i++){
           var entry = changeLog[i];
           if(entry.what == "moveChunk.commit"){
-            if( entry.details.from == shard._id || entry.details.to == shard._id){
-              if(i < startIdx){
+            if( entry.details.from == shard._id || entry.details.to == shard._id ){
+              if(i <= endIdx){
                 finalShards.push(shard);
                 break;
               }
@@ -275,6 +274,19 @@ define([
 
       return finalShards;
     }
+
+    function updateChunks( changeLog , chunks , collections , startIdx , endIdx ){
+      var collMap = {};
+      _.each(collections , function(coll){
+        collMap[coll._id] = coll;
+      })
+
+      _.each(chunks , function(chunk){
+        if(typeof collMap[chunk.ns] == "undefined"){
+          delete chunk; 
+        }
+      })
+    } 
 
     // Public methods
     return {

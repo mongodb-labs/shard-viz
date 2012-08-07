@@ -19,9 +19,18 @@ define([
     initialize : function(options){
       this.eventAgg = options.eventAgg;
       this.eventAgg.bind("timeslider:move" , this.replay , this);
-      this.eventAgg.bind("timeslider:stop_fetch" , this.stopFetch , this );
-      this.eventAgg.bind("resume_fetch" , this.resumeFetch , this );
-      this.fetch();
+      this.eventAgg.bind("timeslider:stop_fetch" , this.stopFetch , this);
+      this.eventAgg.bind("timeslider:resume_fetch" , this.resumeFetch , this);
+      this.eventAgg.bind("welcome:update" , this.setInitialUrl, this);
+      this.eventAgg.bind("settings:update" , this.changeUrl , this);
+
+      var urlFromLocalStorage = getPersistedItem("configUrl");
+      if(urlFromLocalStorage){
+        this.url = urlFromLocalStorage;
+        this.fetch();
+      } else {
+        this.url = "";
+      }
     } ,
     parse : function(response){
 
@@ -43,6 +52,7 @@ define([
         response.databases = dbMap;
 
         return response;
+
       } else return;
 
     },
@@ -77,7 +87,6 @@ define([
         if(!err){ 
 
           _.each(response , function(respItem){
-            // console.log(respItem);
             if( typeof respItem == "undefined" ){
               return;
             }
@@ -87,8 +96,8 @@ define([
 
           if(!self.fetchTimerId){
             self.attributes = parsedResponse;
-            self.trigger( "configdata:loaded" );
             self.initLoad = true;
+            self.trigger( "configdata:loaded" );
             self.fetchTimerId = setInterval( function(){ self.fetch({url : self.url + "/config/changelog/?limit=0" }); } , 500 , self);
           } else if( parsedResponse ){
             self.attributes = parsedResponse;
@@ -172,16 +181,20 @@ define([
       return attrs;
     },
     replay : function(time){
+      if(!this.prevReplayTime){
+        this.prevReplayTime = time.prevTime;
+      }
       var replayData = Replay.replay( this.attributes.collections , 
                                       this.attributes.shards , 
                                       this.attributes.chunks , 
                                       this.attributes.changeLog , 
                                       this.attributes.databases ,
-                                      time.prevTime , 
+                                      this.prevReplayTime ,  
                                       time.curTime );
 
+      this.prevReplayTime = time.curTime;
+
       if( replayData ){
-        console.log(replayData.collections);
         this.attributes.chunks = replayData.chunks;
         this.attributes.collections = replayData.collections;
         this.attributes.shards = replayData.shards;
@@ -200,7 +213,13 @@ define([
         this.fetchTimerId = setInterval( function(){ self.fetch({url : self.url + "/config/changelog/?limit=0" }); } , 500 , self);
       }
     },
-    url : "http://127.0.0.1:5004",
+    setInitialUrl : function(newUrl){
+      this.url = newUrl.url;
+      this.fetch();
+    },
+    changeUrl : function(newUrl){
+      this.url = newUrl.url;
+    },
     initLoad : false
     
   });
