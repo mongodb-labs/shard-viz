@@ -5,6 +5,7 @@ define([
   "underscore",
   "backbone",
   "bootstrap-modal",
+  "validate",
   "util"
 ], function( $ , _ , Backbone ) {
   
@@ -24,7 +25,7 @@ define([
       "hide" : "destroy"
     } ,
     apply : function(){
-      var url = "http://" + $("#settingsHost").val() + ":" + $("#settingsPort").val();
+      var url = $("#settingsHost").val() + ":" + $("#settingsPort").val();
       persistItem("configUrl" , url);
       this.eventAgg.trigger( "settings:update" , { url : url } );
       this.clickDestroy();
@@ -32,6 +33,32 @@ define([
     render : function(){
       $(this.content).append(this.template);
       $("#settingsModal").modal("show");
+
+      var self = this;
+      $("#settingsForm").validate({
+        rules : {
+          host : {
+            required : true ,
+            url : true
+          } , 
+          port : {
+            required : true ,
+            number : true
+          }
+        } ,
+        highlight : function(label){
+          $(label).closest(".control-group").removeClass("success");
+          $(label).closest(".control-group").addClass("error");
+        } ,
+        success : function(label){
+          $(label).closest(".control-group").removeClass("error");
+          $(label).closest(".control-group").addClass("success");
+        } ,
+        submitHandler : function(form){
+          self.apply();
+        }
+      });
+
     } , 
     clickDestroy : function(){
       $("#settingsModal").modal("hide");

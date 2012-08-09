@@ -7,8 +7,8 @@ define([
 
   var ShardChart = function (selection) {  
     var width = parseInt(selection.style("width")),
-        height = 700,
-        space = 100, // spacing between each stack
+        height = 500,
+        space = 80, // spacing between each stack
         barColor = d3.scale.category20c(), 
         barHeight = 50,
         textSpace = 50, // leading space reserved for text

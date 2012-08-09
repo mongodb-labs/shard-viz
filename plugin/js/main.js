@@ -3,10 +3,10 @@
 require.config({
   paths: {
     jquery: "libs/jquery/jquery.min",
-    jqueryui : "libs/jquery/jquery-ui-1.8.21.min",
     "bootstrap-popover" : "libs/jquery/bootstrap-popover",
     "bootstrap-tooltip" : "libs/jquery/bootstrap-tooltip",
     "bootstrap-modal" : "libs/jquery/bootstrap-modal",
+    validate : "libs/jquery/jquery.validate",
     underscore: "libs/underscore/underscore.min",
     backbone: "libs/backbone/backbone.min",
     async : "libs/async/async.min",

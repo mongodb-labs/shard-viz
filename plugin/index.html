@@ -51,14 +51,21 @@
           </div>
           <div class="modal-body">
             <p>Please enter the following information from a config server in your cluster:</p>
-              <form id="initialSettings">
+              <form id="initialSettings" class="form-inline">
                 <fieldset>
-                  <div class="control-group">
-                    http:
-                    <input id="welcomeHost" type="text" class="input-small" placeholder="Host">
-                    <input id="welcomePort" type="text" class="input-small" placeholder="Port">
-                    <button id="welcomeApplySettings" class="btn">Apply</button>
+                  <div class="control-group form-inline">
+                    <label class="control-label" for="host"></label>
+                    <div class="controls">
+                      <input id="welcomeHost" type="text" class="input-large" name="host" id="host" placeholder="Host">
+                    </div>
                   </div>
+                  <div class="control-group form-inline">
+                    <label class="control-label" for="port"></label>
+                    <div class="controls">
+                      <input id="welcomePort" type="text" class="input-small" name="port" id="port" placeholder="Port">
+                    </div>
+                  </div>
+                  <button id="welcomeSubmitSettings" type="submit" class="btn">Continue</button>
                 </fieldset>
               </form>
           </div>
@@ -87,15 +94,24 @@
             <h3>Settings</h3>
           </div>
           <div class="modal-body">
+          <form id="settingsForm" class="form-inline">
             <fieldset>
-              <div class="control-group">
-                <!-- http:// -->
-                <input id="settingsHost" type="text" class="input-small" placeholder="Host">
-                <input id="settingsPort" type="text" class="input-small" placeholder="Port">
-                <button id="applySettings" class="btn">Apply</button>
-                <button id="cancelSettings" class="btn">Cancel</button>
+              <div class="control-group form-inline">
+                <label class="control-label" for="host"></label>
+                <div class="controls">
+                  <input id="settingsHost" type="text" class="input-large" name="host" id="host" placeholder="Host">
+                </div>
               </div>
+              <div class="control-group form-inline">
+                <label class="control-label" for="port"></label>
+                <div class="controls">
+                  <input id="settingsPort" type="text" class="input-small" name="port" id="port" placeholder="Port">
+                </div>
+              </div>
+              <button id="applySettings" type="submit" class="btn">Apply</button>
+              <button id="cancelSettings" class="btn">Cancel</button>
             </fieldset>
+          </form>
           </div>
         </div>
     </script>

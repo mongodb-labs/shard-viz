@@ -103,6 +103,7 @@ define([
       if(brush.empty()) return;
       axisHistory.push(x.domain());
       extentHistory.push(brush.extent());
+      cursorHistory.push(d3.select(cursor).attr("x"));
       updateSlider(brush.extent());
       d3.select(".brush").call(brush.clear());
       d3.select("#cursor").call(cursorSnapToRight);
@@ -112,7 +113,7 @@ define([
       if( axisHistory.length == 0 ) return;
       updateSlider(axisHistory.pop());
       if( extentHistory.length != 0) d3.select(".brush").call( brush.extent(extentHistory.pop()));
-      d3.select("#cursor").call(cursorSnapToRight);
+      d3.select(cursor).attr("x" , cursorHistory.pop() );
     }
 
     function setPrevCursorTime(){
