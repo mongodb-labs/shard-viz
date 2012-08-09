@@ -19,18 +19,6 @@ define([
 	prevData = null
         zoomed = null; // g id of zoomed cell
 
-    // When window resizes, resize chart
-    d3.select(window).on('resize', function() {
-      width = parseInt(selection.style("width"));
-      selection.select("svg").style("width", width);
-      treemap = d3.layout.treemap()
-        .size([width, height])
-        .sticky(false)
-        .children(function(d) { return d.children; })
-        .value(function(d) { return d.size; });
-      chart(prevData);
-    });
-
     var treemap = d3.layout.treemap()
       .size([width, height])
       .sticky(false)
@@ -412,11 +400,22 @@ define([
       // console.log(result)
       return result;
     }
+
+    // resizes chart according to the width of the parent element
+    chart.resize = function() {
+      width = parseInt(selection.style("width"));
+      selection.select("svg").style("width", width);
+      treemap = d3.layout.treemap()
+        .size([width, height])
+        .sticky(false)
+        .children(function(d) { return d.children; })
+        .value(function(d) { return d.size; });
+      chart(prevData);
+    }
     
-    // Remove event listeners
     chart.destroy = function() {
-      d3.select(window).on('resize', null);
-    };
+      board.remove();
+    }
 
     return chart;
   }

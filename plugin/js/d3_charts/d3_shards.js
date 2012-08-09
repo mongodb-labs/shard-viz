@@ -10,6 +10,8 @@ define([
         height = 700,
         space = 100, // spacing between each stack
         barColor = d3.scale.category20c(), 
+        defaultBarHeight = 50,
+        barHeight = defaultBarHeight,
         barHeight = 50,
         textSpace = 50, // leading space reserved for text
         textPad = 5, // padding between text and shards
@@ -207,6 +209,18 @@ define([
       return _.map(_.zip(colls, colors), function(i) { return {name: i[0], color: i[1]}; });
     }
 
+    // resize chart according to parent element
+    chart.resize = function() {
+      var prevWidth = width;
+      width = parseInt(selection.style("width"));
+      var diff = width / prevWidth;
+      selection.select("svg").style("width", width);
+      barHeight = ((barHeight * diff) > defaultBarHeight)?defautBarHeight:barHeight * diff;
+    }
+
+    chart.destroy = function() {
+      board.remove();
+    }
     return chart;
   }
 
