@@ -214,8 +214,7 @@ define([
       var prevWidth = width;
       width = parseInt(selection.style("width"));
       var diff = width / prevWidth;
-      selection.select("svg").style("width", width);
-      barHeight = ((barHeight * diff) > defaultBarHeight)?defautBarHeight:barHeight * diff;
+      selection.select("svg").attr("width", width);
     }
 
     chart.destroy = function() {

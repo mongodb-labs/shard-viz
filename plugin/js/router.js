@@ -26,6 +26,11 @@ define([
       this.eventAgg = _.extend({} , Backbone.Events); // Global event aggregator
       this.eventAgg.bind("welcome:update" , this.loadDefaults , this);
 
+      var self = this;
+      $(window).on( "resize" , function(){
+        self.eventAgg.trigger("router:resize");
+      })
+
       this.configData = new ConfigData({ eventAgg : this.eventAgg }); // Data model
 
       if(!getPersistedItem("configUrl")){

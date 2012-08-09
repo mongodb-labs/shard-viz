@@ -22,6 +22,7 @@ define([
       }
       this.eventAgg = options.eventAgg;
       this.eventAgg.bind( "router:clean" , this.destroy , this);
+      this.eventAgg.bind( "router:resize" , this.resize , this);
       this.model.bind( "configdata:replay" , this.render , this );
       this.model.bind( "configdata:fetch" , this.render, this);
       this.model.bind( "configdata:loaded" , this.render , this);
@@ -58,6 +59,9 @@ define([
       }
       return this;
     } ,
+    resize : function(){
+      this.d3CollChart.resize();
+    } ,
     destroy : function(){
       if(this.parent){
         $("#leftMargin").removeClass("span2");
@@ -71,6 +75,7 @@ define([
         $("#shards-legend").remove();
       }
       d3.select("#collections-svg").remove();
+      this.eventAgg.unbind( "router:resize" , this.resize);
       this.eventAgg.unbind( "router:clean" , this.destroy);
       this.model.unbind( "configdata:replay" , this.render);
       this.model.unbind( "configdata:fetch" , this.render);

@@ -23,6 +23,7 @@ define([
       }
       this.eventAgg = options.eventAgg;
       this.eventAgg.bind( "router:clean" , this.destroy , this);
+      this.eventAgg.bind( "router:resize" , this.resize , this);
       this.model.bind( "configdata:replay" , this.render , this );
       this.model.bind( "configdata:fetch" , this.render, this);
       this.model.bind( "configdata:loaded" , this.render , this);
@@ -54,6 +55,10 @@ define([
         this.shardLegendView.legend(data);
       }
       return this;
+    } ,
+    resize : function(){
+      this.d3ShardChart.resize();
+      this.d3ShardChart(this.model.toJSON());
     } ,
     destroy : function(){
       if(this.parent){

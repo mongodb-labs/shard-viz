@@ -141,6 +141,12 @@ define([
       eventAgg.trigger("timeslider:stop_fetch");
     }
 
+    chart.destroy = function(){
+      d3.select("#in").on("click" , null);
+      d3.select("#in").on("click" , null);
+      d3.select("svg").remove();
+    }
+
     return chart;
   }
 
