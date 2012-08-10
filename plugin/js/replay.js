@@ -1,5 +1,21 @@
 // replay.js
 
+// Copyright 2012 Phillip Quiza, Andrei Nagornyi
+
+/**
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+
 define([
   "underscore",
   "util"
@@ -122,8 +138,7 @@ define([
                           ns : data[idx].ns ,
                           min : data[idx].details.before.min , 
                           max : data[idx].details.before.max ,
-                          shard : shard
-                        };
+                          shard : shard };
             chunks[genChunkKey( data[idx].ns , data[idx].details.before.min )] = oldChunk = chunk;
           }
           
@@ -201,35 +216,17 @@ define([
       if(startIdx == changeLog.length){
         startIdx -= 1;
       }
-      else if(startIdx != 0){
-        if ( timestamps[startIdx + 1] - timestamps[startIdx] > timestamps[startIdx] - timestamps[startIdx - 1])
-          startIdx--;
-        else startIdx ++;
-      }
 
-      if(endIdx == changeLog.length)
+      if(endIdx == changeLog.length){
         endIdx -= 1;
-      else if(startIdx != 0){
-        if ( timestamps[endIdx + 1] - timestamps[endIdx] > timestamps[endIdx] - timestamps[endIdx - 1])
-          endIdx--;
-        else endIdx ++;
       }
 
-      // Check if timestamps exist in the changelog.
-      if( typeof startIdx == "undefined" ){
-        //console.log("The configAt timestamp is not in the changelog.");
-        return;
-      }
-      if( typeof endIdx == "undefined" ){
-        //console.log("The destDate timestamp is not in the changelog.");
+      var direction = endIdx - startIdx > 0 ? "forward" : "rewind"; 
+
+      if( endIdx == startIdx ){
         return;
       }
 
-      if ( startIdx == endIdx ){
-        return;
-      }
-
-      var direction = endIdx - startIdx > 0 ? "forward" : "rewind" ; 
       if(direction == "forward") return fastForward( collections , shards , chunks , changeLog , databases , startIdx , endIdx );
       if(direction == "rewind")  return rewind( collections, shards , chunks , changeLog , databases , startIdx , endIdx ); 
 

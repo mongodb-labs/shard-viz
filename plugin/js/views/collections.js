@@ -1,5 +1,21 @@
 // collections.js
 
+// Copyright 2012 Phillip Quiza, Andrei Nagornyi
+
+/**
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+
 define([
   "jquery",
   "underscore",
@@ -7,10 +23,9 @@ define([
   "d3",
   "views/timeslider",
   "views/legend",
-  "views/time_module",
   "d3_collections",
   "util"
-], function( $ , _ , Backbone , d3 , TimesliderView , LegendView , TimeModuleView , CollectionsChart ){
+], function( $ , _ , Backbone , d3 , TimesliderView , LegendView , CollectionsChart ){
 
   var CollectionsView = Backbone.View.extend({
     initialize : function(options){
@@ -41,12 +56,6 @@ define([
         $("#shards-legend").append("<h2>" + "Shards" + "</h2>").css("font-family" , "Helvetica Neue, Helvetica, sans-serif");
         this.collLegendView = new LegendView({ el : $("#collections-legend") , model : this.model , eventAgg : options.eventAgg , chart : this.d3CollChart , mode : "collections:collections" });
         this.shardLegendView = new LegendView({ el : $("#shards-legend") , model : this.model , eventAgg : options.eventAgg , chart : this.d3CollChart , mode : "collections:shards" });
-      }
-      if(options.time_module){
-        this.timeModuleView = new TimeModuleView({ el : $("leftMargin") , model : this.model , eventAgg : options.eventAgg });
-        if(this.model.initLoad){
-          this.timeModuleView.render();
-        }
       }
     } ,
     render : function(){

@@ -1,5 +1,21 @@
 // d3_slider.js
 
+// Copyright 2012 Phillip Quiza, Andrei Nagornyi
+
+/**
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+
 define([
   "d3",
   "underscore"
@@ -68,11 +84,11 @@ define([
 
     function cursorSnapToRight( rect ){
       var rect = this;
+      var rect = this;
       var rw = parseInt(rect.attr("width"));
       var bw = parseInt(brushRect.attr("width"));
       this.attr("x" , (bw - rw + 1) + "");
       setPrevCursorTime();
-      return this;
     }
 
     function chart(data){
@@ -137,6 +153,7 @@ define([
       var rightBound = domain[1].valueOf();
 
       var curTime = Math.floor(curLocation * (rightBound - leftBound) / width + leftBound);
+      //console.log("SlideEnd  " , curTime );
       eventAgg.trigger("timeslider:move" , { curTime : curTime , prevTime : prevCursorTime });
       eventAgg.trigger("timeslider:stop_fetch");
     }
@@ -144,7 +161,11 @@ define([
     chart.destroy = function(){
       d3.select("#in").on("click" , null);
       d3.select("#in").on("click" , null);
-      d3.select("svg").remove();
+      d3.behavior.drag()
+        .on("dragstart" , null)
+        .on("drag", null)
+        .on("dragend", null);
+      d3.select("#slider-svg").remove();
     }
 
     return chart;
